@@ -19,7 +19,9 @@ def config_file_generator():
 etherscan_api_key: ''
 
 # Paste the wallet address you want to track here.
+# Simply leave goerli_test_net as false if you want to track Ethereum mainnet wallet.
 wallet_address: ''
+goerli_test_net: false
 
 # Time interval (in seconds) at which the program checks for new transactions on the tracked wallet addresses.
 # Noted that Etherscan API has a rate limit per second and day!
