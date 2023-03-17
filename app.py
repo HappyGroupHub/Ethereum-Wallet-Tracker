@@ -50,18 +50,31 @@ def track_latest_txns():
     #                                                offset=offset)
 
     txns_info = [
-        ("normal", normal_txns, latest_seen_normal_txn),
-        ("internal", internal_txns, latest_seen_internal_txn),
-        ("erc20", erc20_txns, latest_seen_erc20_txn),
-        ("erc721", erc721_txns, latest_seen_erc721_txn)
-        # ("erc1155", erc1155_txns, latest_seen_erc1155_txn)
+        ('normal', normal_txns, latest_seen_normal_txn),
+        ('internal', internal_txns, latest_seen_internal_txn),
+        ('erc20', erc20_txns, latest_seen_erc20_txn),
+        ('erc721', erc721_txns, latest_seen_erc721_txn)
+        # ('erc1155', erc1155_txns, latest_seen_erc1155_txn)
     ]
     new_txns = []
+    temp_new_txns = []
     for txns_name, txns_type, latest_seen_txn in txns_info:
         for txn in txns_type:
             if not txn['hash'] == latest_seen_txn:
-                new_txns.append(txn)
+                temp_new_txns.append(txn)
             else:
+                if txns_name == 'normal':
+                    latest_seen_normal_txn = temp_new_txns[0]['hash']
+                elif txns_name == 'internal':
+                    latest_seen_internal_txn = temp_new_txns[0]['hash']
+                elif txns_name == 'erc20':
+                    latest_seen_erc20_txn = temp_new_txns[0]['hash']
+                elif txns_name == 'erc721':
+                    latest_seen_erc721_txn = temp_new_txns[0]['hash']
+                # elif txns_name == 'erc1155':
+                #     latest_seen_erc1155_txn = temp_new_txns[0]['hash']
+                new_txns.extend(temp_new_txns)
+                temp_new_txns.clear()
                 break
     new_txns = sorted(new_txns, key=lambda txn: txn['timeStamp'])
     latest_seen_block = int(new_txns[-1]['blockNumber'])
