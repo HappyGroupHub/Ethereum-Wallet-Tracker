@@ -9,8 +9,11 @@ config = utils.read_config()
 
 def get_api_url(module, action, api_key=config.get('etherscan_api_key'), address=None,
                 start_block=None, end_block=None, sort=None, page=None, offset=None,
-                contract_address=None, tag=None):
-    url = f'https://api.etherscan.io/api?module={module}&action={action}&apikey={api_key}'
+                contract_address=None, tag=None, use_goerli_testnet=False):
+    if use_goerli_testnet:
+        url = f'https://api-goerli.etherscan.io/api?module={module}&action={action}&apikey={api_key}'
+    else:
+        url = f'https://api.etherscan.io/api?module={module}&action={action}&apikey={api_key}'
 
     if address:
         url += f'&address={address}'
