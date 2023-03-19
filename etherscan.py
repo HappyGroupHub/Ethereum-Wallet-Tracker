@@ -54,7 +54,7 @@ def get_wallet_balance(wallet_address, tag='latest'):
                    'balance': balance}
         return results
     else:
-        raise Exception(f"An error occurred while getting wallet balance: {response['message']}")
+        raise Exception(f"An error occurred while getting wallet balance: {response}")
 
 
 def get_normal_transactions(wallet_address, start_block=0, end_block=99999999, page=1, offset=10,
@@ -75,9 +75,11 @@ def get_normal_transactions(wallet_address, start_block=0, end_block=99999999, p
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
+    elif response['message'] == 'No transactions found':
+        return None
     else:
         raise Exception(
-            f"An error occurred while getting normal transactions: {response['message']}")
+            f"An error occurred while getting normal transactions: {response}")
 
 
 def get_internal_transactions(wallet_address, start_block=0, end_block=99999999, page=1, offset=10,
@@ -98,9 +100,11 @@ def get_internal_transactions(wallet_address, start_block=0, end_block=99999999,
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
+    elif response['message'] == 'No transactions found':
+        return None
     else:
         raise Exception(
-            f"An error occurred while getting internal transactions: {response['message']}")
+            f"An error occurred while getting internal transactions: {response}")
 
 
 def get_erc20_token_transfers(wallet_address, contract_address=None, start_block=0,
@@ -123,9 +127,11 @@ def get_erc20_token_transfers(wallet_address, contract_address=None, start_block
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
+    elif response['message'] == 'No transactions found':
+        return None
     else:
         raise Exception(
-            f"An error occurred while getting erc20 token transfers: {response['message']}")
+            f"An error occurred while getting erc20 token transfers: {response}")
 
 
 def get_erc721_token_transfers(wallet_address, contract_address=None, start_block=0,
@@ -148,14 +154,18 @@ def get_erc721_token_transfers(wallet_address, contract_address=None, start_bloc
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
+    elif response['message'] == 'No transactions found':
+        return None
     else:
         raise Exception(
-            f"An error occurred while getting erc721 token transfers: {response['message']}")
+            f"An error occurred while getting erc721 token transfers: {response}")
 
 
 def get_erc1155_token_transfers(wallet_address, contract_address=None, start_block=0,
                                 end_block=99999999, page=1, offset=10, sort='desc'):
     """Get erc1155 token transfers.
+
+    Does NOT support Goerli testnet.
 
     :param str wallet_address: Wallet address
     :param str contract_address: Specify token contract address, default is all erc1155 tokens
@@ -166,13 +176,18 @@ def get_erc1155_token_transfers(wallet_address, contract_address=None, start_blo
     :param str sort: Sorting preference, asc or desc, default is desc
     :rtype: list
     """
-    url = get_api_url('account', 'tokens1155tx', address=wallet_address,
-                      contract_address=contract_address, start_block=start_block,
-                      end_block=end_block, page=page, offset=offset, sort=sort)
-    response = requests.get(url).json()
+    if not config.get('use_goerli_testnet'):
+        url = get_api_url('account', 'token1155tx', address=wallet_address,
+                          contract_address=contract_address, start_block=start_block,
+                          end_block=end_block, page=page, offset=offset, sort=sort)
+        response = requests.get(url).json()
 
-    if response['status'] == '1' and response['message'] == 'OK':
-        return response['result']
+        if response['status'] == '1' and response['message'] == 'OK':
+            return response['result']
+        elif response['message'] == 'No transactions found':
+            return None
+        else:
+            raise Exception(
+                f"An error occurred while getting erc1155 token transfers: {response}")
     else:
-        raise Exception(
-            f"An error occurred while getting erc1155 token transfers: {response['message']}")
+        return None
