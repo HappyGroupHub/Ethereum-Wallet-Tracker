@@ -25,8 +25,13 @@ use_goerli_testnet: false
 
 # Time interval (in seconds) at which the program checks for new transactions on the tracked wallet addresses.
 # Noted that Etherscan API has a rate limit per second and day!
-# The default value is 15 seconds.
-check_interval: 15
+# The default value is 60 seconds.
+check_interval: 60
+
+# Line Notify Service
+# Get notified by Line while there is a new transaction on the tracked wallet addresses.
+# You can get the token from here: https://notify-bot.line.me/my/
+line_notify_token: ''
 """
                 )
     sys.exit()
@@ -53,6 +58,7 @@ def read_config():
                 'wallet_address': data['wallet_address'],
                 'use_goerli_testnet': data['use_goerli_testnet'],
                 'check_interval': data['check_interval'],
+                'line_notify_token': data['line_notify_token']
             }
             return config
     except (KeyError, TypeError):
@@ -60,3 +66,21 @@ def read_config():
             "An error occurred while reading config.yml, please check if the file is corrected filled.\n"
             "If the problem can't be solved, consider delete config.yml and restart the program.\n")
         sys.exit()
+
+
+def wei_to_eth(wei):
+    """Convert wei to eth.
+
+    :param int wei: Amount of wei
+    :rtype: float
+    """
+    return round(wei / 10 ** 18, 4)
+
+
+def wei_to_gwei(wei):
+    """Convert wei to gwei.
+
+    :param int wei: Amount of wei
+    :rtype: int
+    """
+    return int(round(wei / 10 ** 9, 0))
