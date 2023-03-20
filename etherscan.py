@@ -5,6 +5,9 @@ import requests
 import utilities as utils
 
 config = utils.read_config()
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like '
+                  'Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 
 
 def get_api_url(module, action, api_key=config.get('etherscan_api_key'), address=None,
@@ -44,7 +47,7 @@ def get_wallet_balance(wallet_address, tag='latest'):
     :rtype: dict
     """
     url = get_api_url('account', 'balance', address=wallet_address, tag=tag)
-    response = requests.get(url).json()
+    response = requests.get(url, headers=headers).json()
 
     if response['status'] == '1' and response['message'] == 'OK':
         balance_in_wei = int(response['result'])
@@ -71,7 +74,7 @@ def get_normal_transactions(wallet_address, start_block=0, end_block=99999999, p
     """
     url = get_api_url('account', 'txlist', address=wallet_address, start_block=start_block,
                       end_block=end_block, page=page, offset=offset, sort=sort)
-    response = requests.get(url).json()
+    response = requests.get(url, headers=headers).json()
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
@@ -96,7 +99,7 @@ def get_internal_transactions(wallet_address, start_block=0, end_block=99999999,
     """
     url = get_api_url('account', 'txlistinternal', address=wallet_address, start_block=start_block,
                       end_block=end_block, page=page, offset=offset, sort=sort)
-    response = requests.get(url).json()
+    response = requests.get(url, headers=headers).json()
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
@@ -123,7 +126,7 @@ def get_erc20_token_transfers(wallet_address, contract_address=None, start_block
     url = get_api_url('account', 'tokentx', address=wallet_address,
                       contract_address=contract_address, start_block=start_block,
                       end_block=end_block, page=page, offset=offset, sort=sort)
-    response = requests.get(url).json()
+    response = requests.get(url, headers=headers).json()
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
@@ -150,7 +153,7 @@ def get_erc721_token_transfers(wallet_address, contract_address=None, start_bloc
     url = get_api_url('account', 'tokennfttx', address=wallet_address,
                       contract_address=contract_address, start_block=start_block,
                       end_block=end_block, page=page, offset=offset, sort=sort)
-    response = requests.get(url).json()
+    response = requests.get(url, headers=headers).json()
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
@@ -180,7 +183,7 @@ def get_erc1155_token_transfers(wallet_address, contract_address=None, start_blo
         url = get_api_url('account', 'token1155tx', address=wallet_address,
                           contract_address=contract_address, start_block=start_block,
                           end_block=end_block, page=page, offset=offset, sort=sort)
-        response = requests.get(url).json()
+        response = requests.get(url, headers=headers).json()
 
         if response['status'] == '1' and response['message'] == 'OK':
             return response['result']
