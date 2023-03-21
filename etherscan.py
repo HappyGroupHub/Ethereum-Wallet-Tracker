@@ -121,6 +121,7 @@ def get_normal_transactions(wallet_address, start_block=0, end_block=99999999, p
         except JSONDecodeError:
             time.sleep(1)
             continue
+    print(f'Normal Txn: {response}')
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
@@ -153,6 +154,7 @@ def get_internal_transactions(wallet_address, start_block=0, end_block=99999999,
         except JSONDecodeError:
             time.sleep(1)
             continue
+    print(f'Internal Txn: {response}')
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
@@ -187,6 +189,7 @@ def get_erc20_token_transfers(wallet_address, contract_address=None, start_block
         except JSONDecodeError:
             time.sleep(1)
             continue
+    # print(f'ERC20 Txn: {response}')
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
@@ -221,6 +224,7 @@ def get_erc721_token_transfers(wallet_address, contract_address=None, start_bloc
         except JSONDecodeError:
             time.sleep(1)
             continue
+    print(f'ERC721 Txn: {response}')
 
     if response['status'] == '1' and response['message'] == 'OK':
         return response['result']
@@ -258,6 +262,7 @@ def get_erc1155_token_transfers(wallet_address, contract_address=None, start_blo
             except JSONDecodeError:
                 time.sleep(1)
                 continue
+        # print(f'ERC1155 Txn: {response}')
 
         if response['status'] == '1' and response['message'] == 'OK':
             return response['result']

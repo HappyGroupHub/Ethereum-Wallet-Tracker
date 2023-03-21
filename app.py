@@ -76,79 +76,102 @@ def track_latest_txns():
     ]
     new_txns = []
     temp_new_txns = []
-    for txns_name, txns_type, latest_seen_txn in txns_info:
+    for txns_name, txns_type, last_seen_txn in txns_info:
         if txns_type is not None:
             for txn in txns_type:
-                if not txn['hash'] == latest_seen_txn:
-                    txn['type'] = txns_name
+                txn['type'] = txns_name
+                if not txn['hash'] == last_seen_txn:
                     temp_new_txns.append(txn)
                 elif not len(temp_new_txns) == 0:
-                    if txns_name == 'normal':
+                    if txn['type'] == 'normal':
+                        print('Update last seen normal txn')
                         last_seen_normal_txn = temp_new_txns[0]['hash']
-                    elif txns_name == 'internal':
+                    elif txn['type'] == 'internal':
+                        print('Update last seen internal txn')
                         last_seen_internal_txn = temp_new_txns[0]['hash']
-                    elif txns_name == 'erc20':
+                    elif txn['type'] == 'erc20':
                         last_seen_erc20_txn = temp_new_txns[0]['hash']
-                    elif txns_name == 'erc721':
+                    elif txn['type'] == 'erc721':
+                        print('Update last seen erc721 txn')
                         last_seen_erc721_txn = temp_new_txns[0]['hash']
-                    elif txns_name == 'erc1155':
+                    elif txn['type'] == 'erc1155':
                         last_seen_erc1155_txn = temp_new_txns[0]['hash']
                     new_txns.extend(temp_new_txns)
                     temp_new_txns.clear()
     if not len(new_txns) == 0:
+        new_txns = merge_txns(new_txns, normal_txns, internal_txns, erc20_txns, erc721_txns)
         new_txns = sorted(new_txns, key=lambda txn: txn['timeStamp'])
         last_seen_block = int(new_txns[-1]['blockNumber'])
         print(f'New transactions found: {new_txns}')
         new_txns = analysis_txns(new_txns)
-        notify_by_line(new_txns)
+        line_notify.notify_new_txns(new_txns)
+
+
+def merge_txns(new_txns, normal_txns, internal_txns, erc20_txns, erc721_txns):
+    if erc721_txns is None:
+        return new_txns
+    erc721_txns_dict = {txn['hash']: txn for txn in erc721_txns}
+    if normal_txns is not None:
+        for txn in normal_txns:
+            if txn['hash'] in erc721_txns_dict:
+                erc721_txns_dict[txn['hash']]['value'] = txn['value']
+                new_txns[:] = [d for d in new_txns if
+                               not (d.get('hash') == txn['hash'] and d.get('type') == 'normal')]
+    if internal_txns is not None:
+        for txn in internal_txns:
+            if txn['hash'] in erc721_txns_dict:
+                erc721_txns_dict[txn['hash']]['value'] = txn['value']
+                new_txns[:] = [d for d in new_txns if
+                               not (d.get('hash') == txn['hash'] and d.get('type') == 'internal')]
+    if erc20_txns is not None:
+        for txn in erc20_txns:
+            if txn['hash'] in erc721_txns_dict:
+                erc721_txns_dict[txn['hash']]['erc20_token_name'] = txn['tokenName']
+                erc721_txns_dict[txn['hash']]['erc20_token_symbol'] = txn['tokenSymbol']
+                erc721_txns_dict[txn['hash']]['erc20_token_contract'] = txn['contractAddress']
+                erc721_txns_dict[txn['hash']]['value'] = txn['value']
+                new_txns[:] = [d for d in new_txns if
+                               not (d.get('hash') == txn['hash'] and d.get('type') == 'erc20')]
+    return new_txns
 
 
 def analysis_txns(new_txns):
     for txn in new_txns:
+        if config.get('use_goerli_testnet'):
+            base_url = 'https://goerli.etherscan.io'
+        else:
+            base_url = 'https://etherscan.io'
+        txn['txn_url'] = f'{base_url}/tx/{txn["hash"]}'
+        txn['from_url'] = f'{base_url}/address/{txn["from"]}'
+        txn['to_url'] = f'{base_url}/address/{txn["to"]}'
+        if txn['from'] == wallet_address.lower():
+            txn['from'] = 'You'
+        if txn['to'] == wallet_address.lower():
+            txn['to'] = 'You'
+        txn['time'] = datetime.fromtimestamp(int(txn['timeStamp'])).strftime(
+            '%Y-%m-%d %H:%M:%S')
+        txn['gwei'] = utils.wei_to_gwei(int(txn['gasPrice']))
+
         if txn['type'] == 'normal':
-            if config.get('use_goerli_testnet'):
-                base_url = 'https://goerli.etherscan.io'
-            else:
-                base_url = 'https://etherscan.io'
-            txn['txn_url'] = f'{base_url}/tx/{txn["hash"]}'
-            txn['from_url'] = f'{base_url}/address/{txn["from"]}'
-            txn['to_url'] = f'{base_url}/address/{txn["to"]}'
-            if txn['from'] == wallet_address.lower():
-                txn['from'] = 'You'
-            if txn['to'] == wallet_address.lower():
-                txn['to'] = 'You'
             txn['eth_value'] = utils.wei_to_eth(int(txn['value']))
-            txn['gwei'] = utils.wei_to_gwei(int(txn['gasPrice']))
-            txn['time'] = datetime.fromtimestamp(int(txn['timeStamp'])).strftime(
-                '%Y-%m-%d %H:%M:%S')
             if txn['methodId'] == '0x':
                 txn['action'] = 'Transfer'
             else:
                 txn['action'] = txn['functionName'].split('(')[0]
+        elif txn['type'] == 'erc721':
+            if 'value' not in txn:
+                txn['value'] = 0.0
+            txn['eth_value'] = utils.wei_to_eth(int(txn['value']))
+
     return new_txns
-
-
-def notify_by_line(new_txns):
-    for txn in new_txns:
-        message = f"""New Transaction Found!
-------------------------------------
-From: {txn['from']}
-To: {txn['to']}
-Time: {txn['time']}
-Value: {txn['eth_value']} ETH
-Action: {txn['action']}
-Gas Price: {txn['gwei']} Gwei
-------------------------------------
-Current Balance: {eth.get_wallet_balance(wallet_address).get('balance')} ETH
-{txn['txn_url']}
-"""
-        line_notify.send_message(message)
-        print(message)
 
 
 if __name__ == '__main__':
     init_last_seen_txns()
     while True:
         track_latest_txns()
-        print('finished')
+        print(f'Last seen normal txn: {last_seen_normal_txn}')
+        print(f'Last seen internal txn: {last_seen_internal_txn}')
+        print(f'Last seen erc721 txn: {last_seen_erc721_txn}')
+        print('------------------------------------')
         time.sleep(check_interval)
