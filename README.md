@@ -1,6 +1,6 @@
 # Ethereum Wallet Tracker
 
-📖 [繁體中文版README.md](#以太坊錢包活動通知機器人) 📖
+📖 [繁體中文版README.md](#以太坊錢包交易通知機器人) 📖
 
 ## A bot notifies you when new transaction appears
 
