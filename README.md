@@ -19,7 +19,7 @@ Project progress:
 | Line-Notify support |   ☑️    |
 | Discord bot support |   🛠️   |
 | Normal txns         |   ☑️    |
-| Internal txns       |   ☑️    |
+| Internal txns       |   🛠️   |
 | ERC20 token txns    |   🛠️   |
 | ERC721 token txns   |   ☑️    |
 | ERC1155 token txns  |   ❌️    |
@@ -52,9 +52,7 @@ Project progress:
 etherscan_api_key: ''
 
 # Paste the wallet address you want to track here.
-# Simply leave goerli_test_net as false if you want to track Ethereum mainnet wallet.
 wallet_address: ''
-use_goerli_testnet: false
 
 # Time interval (in seconds) at which the program checks for new transactions on the tracked wallet addresses.
 # Noted that Etherscan API has a rate limit per second and day!
@@ -65,7 +63,21 @@ check_interval: 60
 # Get notified by Line while there is a new transaction on the tracked wallet addresses.
 # You can get the token from here: https://notify-bot.line.me/my/
 line_notify_token: ''
+
+
+# Developer Options (Goerli Testnet)
+# If you don't know what this is, don't touch it.
+use_goerli_testnet: false
 ```
+
+* `etherscan_api_key`: Etherscan API key, you can get it from [here](https://etherscan.io/myapikey)
+* `wallet_address`: The ethereum wallet address you want to track (in hex format, multiple addresses are not supported
+  yet)
+* `check_interval`: The time interval (in seconds) at which the program checks for new transactions on the tracked
+  wallet addresses. Noted that Etherscan API has a rate limit per second and day! The default value is 60 seconds.
+* `line_notify_token`: Line Notify token, you can get it from [here](https://notify-bot.line.me/my/)
+* `use_goerli_testnet`: If you want to use Goerli testnet, set this to `true`. If you don't know what this is, don't
+  touch it.
 
 ---
 
@@ -138,7 +150,7 @@ Goerli 測試網路。
 | 支援 Line-Notify 通知 | ☑️  |
 | 支援 Discord 機器人通知  | 🛠️ |
 | 一般的交易活動           | ☑️  |
-| 內部交易活動            | ☑️  |
+| 內部交易活動            | 🛠️ |
 | ERC20 代幣活動        | 🛠️ |
 | ERC721 代幣活動       | ☑️  |
 | ERC1155 代幣活動      | ❌️  |
@@ -171,9 +183,7 @@ Goerli 測試網路。
 etherscan_api_key: ''
 
 # Paste the wallet address you want to track here.
-# Simply leave goerli_test_net as false if you want to track Ethereum mainnet wallet.
 wallet_address: ''
-use_goerli_testnet: false
 
 # Time interval (in seconds) at which the program checks for new transactions on the tracked wallet addresses.
 # Noted that Etherscan API has a rate limit per second and day!
@@ -184,7 +194,18 @@ check_interval: 60
 # Get notified by Line while there is a new transaction on the tracked wallet addresses.
 # You can get the token from here: https://notify-bot.line.me/my/
 line_notify_token: ''
+
+
+# Developer Options (Goerli Testnet)
+# If you don't know what this is, don't touch it.
+use_goerli_testnet: false
 ```
+
+* `etherscan_api_key` : 你的 Etherscan API 金鑰，你可以在[這裡](https://etherscan.io/myapikey)取得
+* `wallet_address` : 你想要追蹤的以太坊錢包地址 (請使用十六進位制，目前不支援多個錢包)
+* `check_interval` : 檢查新交易的時間間隔 (單位: 秒)，請注意 Etherscan API 有每秒及每日的查詢額度限制，預設為 60 秒
+* `line_notify_token` : Line Notify 權杖金鑰，你可以在[這裡](https://notify-bot.line.me/my/)取得
+* `use_goerli_testnet` : 是否使用 Goerli 測試網路，預設為 `false`，如果你不知道這是什麼請不要更改
 
 ---
 
