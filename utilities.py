@@ -21,20 +21,10 @@ etherscan_api_key: ''
 # Paste the wallet address you want to track here.
 wallet_address: ''
 
-# Time interval (in seconds) at which the program checks for new transactions on the tracked wallet addresses.
-# Noted that Etherscan API has a rate limit per second and day!
-# The default value is 60 seconds.
-check_interval: 60
-
 # Line Notify Service
 # Get notified by Line while there is a new transaction on the tracked wallet addresses.
 # You can get the token from here: https://notify-bot.line.me/my/
 line_notify_token: ''
-
-
-# Developer Options (Goerli Testnet)
-# If you don't know what this is, don't touch it.
-use_goerli_testnet: false
 """
                 )
     sys.exit()
@@ -59,8 +49,6 @@ def read_config():
             config = {
                 'etherscan_api_key': data['etherscan_api_key'],
                 'wallet_address': data['wallet_address'],
-                'use_goerli_testnet': data['use_goerli_testnet'],
-                'check_interval': data['check_interval'],
                 'line_notify_token': data['line_notify_token']
             }
             return config

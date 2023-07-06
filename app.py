@@ -10,7 +10,6 @@ app = Flask(__name__)
 
 @app.route('/alchemy', methods=['POST'])
 def alchemy():
-    print('test')
     print(request.json)
     return Response(status=200)
 
