@@ -25,6 +25,10 @@ wallet_address: ''
 # Get notified by Line while there is a new transaction on the tracked wallet addresses.
 # You can get the token from here: https://notify-bot.line.me/my/
 line_notify_token: ''
+
+
+# Alchemy Webhook Auth Token
+alchemy_webhook_auth_token: ''
 """
                 )
     sys.exit()
@@ -49,7 +53,8 @@ def read_config():
             config = {
                 'etherscan_api_key': data['etherscan_api_key'],
                 'wallet_address': data['wallet_address'],
-                'line_notify_token': data['line_notify_token']
+                'line_notify_token': data['line_notify_token'],
+                'alchemy_webhook_auth_token': data['alchemy_webhook_auth_token']
             }
             return config
     except (KeyError, TypeError):
