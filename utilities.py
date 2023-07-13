@@ -1,5 +1,7 @@
 """This python will handle some extra functions."""
 import sys
+import datetime
+import pytz
 from os.path import exists
 
 import yaml
@@ -80,3 +82,13 @@ def wei_to_gwei(wei):
     :rtype: int
     """
     return int(round(wei / 10 ** 9, 0))
+
+
+def to_localtime(timestamp_from_alchemy, timezone="Asia/Taipei"):
+    dt = datetime.datetime.strptime(timestamp_from_alchemy[:-1], "%Y-%m-%dT%H:%M:%S.%f")
+    utc_tz = pytz.timezone("UTC")
+    utc_dt = utc_tz.localize(dt)
+    local_tz = pytz.timezone(timezone)
+    local_dt = utc_dt.astimezone(local_tz)
+    local_dt_str = local_dt.strftime("%Y-%m-%d %H:%M:%S")
+    return local_dt_str

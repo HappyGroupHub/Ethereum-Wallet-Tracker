@@ -6,6 +6,19 @@ config = utils.read_config()
 
 alchemy_webhook_auth_token = config.get('alchemy_webhook_auth_token')
 
+import logging
+
+import http.client
+
+http.client.HTTPConnection.debuglevel = 1
+
+# You must initialize logging, otherwise you'll not see debug output.
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
+requests_log = logging.getLogger("requests.packages.urllib3")
+requests_log.setLevel(logging.DEBUG)
+requests_log.propagate = True
+
 
 def get_all_tracking_addresses(webhook_id):
     """Get all tracking addresses from alchemy webhook.
