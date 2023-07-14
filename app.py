@@ -1,7 +1,7 @@
 """This is the main file of the project."""
 from flask import Flask, request, Response
 
-import line_notify as line
+import etherscan
 import utilities as utils
 
 config = utils.read_config()
@@ -20,22 +20,21 @@ def alchemy():
     except KeyError:
         pass
     if json_received['type'] == 'ADDRESS_ACTIVITY':
-        message = ''
-        if json_received['event']['activity'][0]['category'] == 'external':
-            message = f"""New Transaction Found on {json_received['event']['network']}!
-------------------------------------
-From: {json_received['event']['activity'][0]['fromAddress']}
-To: {json_received['event']['activity'][0]['toAddress']}
-Time: {utils.to_localtime(json_received['createdAt'])}
-Value: {json_received['event']['activity'][0]['value']} {json_received['event']['activity'][0]['asset']}
-Action: Transfer
-Gas Price: Not supported yet
-------------------------------------
-Current Balance: Not supported yet
-https://etherscan.io/tx/{json_received['event']['activity'][0]['hash']}
-"""
-        line.send_message(message)
-        return Response(status=200)
+        if json_received['event']['network'] == 'ETH_MAINNET' or json_received['event'][
+            'network'] == 'ETH_GOERLI':
+            if json_received['event']['activity'][0]['category'] == 'external':
+                tracking_wallets = utils.get_tracking_wallets()
+                if json_received['event']['activity'][0]['fromAddress'] in tracking_wallets:
+                    target = json_received['event']['activity'][0]['fromAddress']
+                else:
+                    target = json_received['event']['activity'][0]['toAddress']
+                txn = etherscan.get_normal_transactions(target,
+                                                        start_block=int(json_received['event'][
+                                                                            'activity'][0][
+                                                                            'blockNum'], 16)),
+                print('out')
+                print(txn)
+                return Response(status=200)
     return Response(status=200)
 
 

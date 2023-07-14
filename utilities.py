@@ -1,4 +1,5 @@
 """This python will handle some extra functions."""
+import json
 import sys
 import datetime
 import pytz
@@ -64,6 +65,11 @@ def read_config():
             "An error occurred while reading config.yml, please check if the file is corrected filled.\n"
             "If the problem can't be solved, consider delete config.yml and restart the program.\n")
         sys.exit()
+
+
+def get_tracking_wallets():
+    data = json.load(open('tracking_wallets.json', 'r', encoding="utf8"))
+    return data
 
 
 def wei_to_eth(wei):

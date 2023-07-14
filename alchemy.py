@@ -1,3 +1,6 @@
+import http.client
+import logging
+
 import requests
 
 import utilities as utils
@@ -5,10 +8,6 @@ import utilities as utils
 config = utils.read_config()
 
 alchemy_webhook_auth_token = config.get('alchemy_webhook_auth_token')
-
-import logging
-
-import http.client
 
 http.client.HTTPConnection.debuglevel = 1
 
