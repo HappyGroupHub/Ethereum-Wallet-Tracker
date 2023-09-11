@@ -19,6 +19,29 @@ requests_log.setLevel(logging.DEBUG)
 requests_log.propagate = True
 
 
+def create_address_activity_webhook(network, webhook_url):
+    """Create an address activity alchemy webhook.
+
+    :param str network: The network of the webhook.
+    :param str webhook_url: The url of the webhook.
+    :rtype: dict
+    """
+    url = "https://dashboard.alchemy.com/api/create-webhook"
+    payload = {
+        "network": network,
+        "webhook_type": "ADDRESS_ACTIVITY",
+        "webhook_url": webhook_url,
+        "addresses": []
+    }
+    headers = {
+        "accept": "application/json",
+        "X-Alchemy-Token": alchemy_webhook_auth_token,
+        "content-type": "application/json"
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    return response.json()
+
+
 def get_all_tracking_addresses(webhook_id):
     """Get all tracking addresses from alchemy webhook.
 

@@ -17,6 +17,11 @@ def config_file_generator():
 # | Made by LD                       |
 # ++--------------------------------++
 
+# Paste your endpoint for the webhook here.
+# You can use ngrok to get a free static endpoint now!
+# Find out more here: https://ngrok.com/
+webhook_url: 'https://advanced-romantic-seagull.ngrok-free.app'
+
 # Paste your etherscan api key here.
 # You can get the api key from here: https://etherscan.io/myapikey
 etherscan_api_key: ''
@@ -49,6 +54,7 @@ def read_config():
         with open('config.yml', 'r', encoding="utf8") as f:
             data = yaml.load(f, Loader=SafeLoader)
             config = {
+                'webhook_url': data['webhook_url'],
                 'etherscan_api_key': data['etherscan_api_key'],
                 'alchemy_webhook_auth_token': data['alchemy_webhook_auth_token'],
                 'line_channel_access_token': data['line_channel_access_token'],
@@ -62,8 +68,8 @@ def read_config():
         sys.exit()
 
 
-def get_tracking_wallets():
-    data = json.load(open('tracking_wallets.json', 'r', encoding="utf8"))
+def get_tracking_wallets(network):
+    data = json.load(open(f'{network}_wallets.json', 'r', encoding="utf8"))
     return data
 
 

@@ -1,6 +1,7 @@
 # Config File
 config.yml
-tracking_wallets.json
+eth_wallets.json
+goerli_wallets.json
 
 # Logs
 *.log
