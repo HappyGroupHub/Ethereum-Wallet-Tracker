@@ -31,7 +31,7 @@ def create_address_activity_webhook(network, webhook_url):
         "network": network,
         "webhook_type": "ADDRESS_ACTIVITY",
         "webhook_url": webhook_url,
-        "addresses": []
+        "addresses": ["0x92A5148906D08254Dfc9E4007cEAAE37d8c3DDd9"]
     }
     headers = {
         "accept": "application/json",
