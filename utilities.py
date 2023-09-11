@@ -11,8 +11,8 @@ from yaml import SafeLoader
 
 def config_file_generator():
     """Generate the template of config file"""
-    with open('config.yml', 'w', encoding="utf8") as f:
-        f.write("""# ++--------------------------------++
+    with open('config.yml', 'w', encoding="utf8") as file:
+        file.write("""# ++--------------------------------++
 # | Ethereum Wallet Tracker          |
 # | Made by LD                       |
 # ++--------------------------------++
@@ -34,6 +34,7 @@ line_channel_access_token: ''
 line_channel_secret: ''
 """
                 )
+        file.close()
     sys.exit()
 
 
@@ -51,8 +52,8 @@ def read_config():
             config_file_generator()
 
     try:
-        with open('config.yml', 'r', encoding="utf8") as f:
-            data = yaml.load(f, Loader=SafeLoader)
+        with open('config.yml', 'r', encoding="utf8") as file:
+            data = yaml.load(file, Loader=SafeLoader)
             config = {
                 'webhook_url': data['webhook_url'],
                 'etherscan_api_key': data['etherscan_api_key'],
@@ -60,6 +61,7 @@ def read_config():
                 'line_channel_access_token': data['line_channel_access_token'],
                 'line_channel_secret': data['line_channel_secret']
             }
+            file.close()
             return config
     except (KeyError, TypeError):
         print(
@@ -71,6 +73,17 @@ def read_config():
 def get_tracking_wallets(network):
     data = json.load(open(f'{network}_wallets.json', 'r', encoding="utf8"))
     return data
+
+
+def update_json(file, data):
+    """Update a json file.
+
+    :param str file: The file to update.
+    :param dict data: The data to update.
+    """
+    with open(file, 'w', encoding="utf8") as file:
+        json.dump(data, file, indent=4)
+        file.close()
 
 
 def wei_to_eth(wei):
