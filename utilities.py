@@ -21,17 +21,12 @@ def config_file_generator():
 # You can get the api key from here: https://etherscan.io/myapikey
 etherscan_api_key: ''
 
-# Paste the wallet address you want to track here.
-wallet_address: ''
-
-# Line Notify Service
-# Get notified by Line while there is a new transaction on the tracked wallet addresses.
-# You can get the token from here: https://notify-bot.line.me/my/
-line_notify_token: ''
-
-
 # Alchemy Webhook Auth Token
 alchemy_webhook_auth_token: ''
+
+# Line Bot Tokens
+line_channel_access_token: ''
+line_channel_secret: ''
 """
                 )
     sys.exit()
@@ -55,9 +50,9 @@ def read_config():
             data = yaml.load(f, Loader=SafeLoader)
             config = {
                 'etherscan_api_key': data['etherscan_api_key'],
-                'wallet_address': data['wallet_address'],
-                'line_notify_token': data['line_notify_token'],
-                'alchemy_webhook_auth_token': data['alchemy_webhook_auth_token']
+                'alchemy_webhook_auth_token': data['alchemy_webhook_auth_token'],
+                'line_channel_access_token': data['line_channel_access_token'],
+                'line_channel_secret': data['line_channel_secret']
             }
             return config
     except (KeyError, TypeError):

@@ -2,3 +2,4 @@ PyYAML~=6.0
 requests==2.31.0
 Flask~=2.3.2
 pytz~=2023.3
+line-bot-sdk==3.4.0

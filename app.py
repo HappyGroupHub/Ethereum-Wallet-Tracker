@@ -1,12 +1,41 @@
 """This is the main file of the project."""
-from flask import Flask, request, Response
+from flask import Flask, request, Response, abort
+from flask.logging import create_logger
+from linebot.v3 import WebhookHandler
+from linebot.v3.exceptions import InvalidSignatureError
+from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, TextMessage
+from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 import etherscan as eth
 import utilities as utils
 
 config = utils.read_config()
+configuration = Configuration(access_token=config['line_channel_access_token'])
+handler = WebhookHandler(config['line_channel_secret'])
 
 app = Flask(__name__)
+log = create_logger(app)
+
+
+@app.route("/callback", methods=['POST'])
+def callback():
+    """Callback function for line webhook."""
+
+    # get X-Line-Signature header value
+    signature = request.headers['X-Line-Signature']
+
+    # get request body as text
+    body = request.get_data(as_text=True)
+    log.info("Request body: %s", body)
+
+    # handle webhook body
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        print("Invalid signature. Please check your channel access token/channel secret.")
+        abort(400)
+
+    return 'OK'
 
 
 @app.route('/alchemy', methods=['POST'])
