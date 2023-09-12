@@ -63,7 +63,7 @@ def handle_message(event):
                 command, network, wallet_address, notify_token = parts[:4]
                 tracking_wallets = utils.get_tracking_wallets(network)
                 al.add_tracking_addresses(tracking_wallets['webhook_id'], [wallet_address])
-                tracking_wallets[wallet_address] = notify_token
+                tracking_wallets[wallet_address.lower()] = notify_token
                 utils.update_json(f'{network}_wallets.json', tracking_wallets)
                 reply_message = f"Successfully added new tracking address!\n" \
                                 f"Network: {network.upper()}\n" \
@@ -71,7 +71,7 @@ def handle_message(event):
                                 f"Line Notify Token: {notify_token}"
             else:
                 reply_message = f"Invalid input format.\n" \
-                                f"/add <eth/goerli> <wallet_address> <line_notify_token>'"
+                                f"/add <eth/goerli> <wallet_address> <line_notify_token>"
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
                     reply_token=reply_token,
