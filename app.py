@@ -3,10 +3,13 @@ from flask import Flask, request, Response, abort
 from flask.logging import create_logger
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, TextMessage
+from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, \
+    TextMessage
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
+import alchemy as al
 import etherscan as eth
+import initial_checks
 import utilities as utils
 
 config = utils.read_config()
@@ -36,6 +39,43 @@ def callback():
         abort(400)
 
     return 'OK'
+
+
+@handler.add(MessageEvent, message=TextMessageContent)
+def handle_message(event):
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        message_received = event.message.text
+        reply_token = event.reply_token
+        if message_received == 'test':
+            reply_message = 'test'
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
+                    reply_token=reply_token,
+                    messages=[TextMessage(text=reply_message)]
+                )
+            )
+        if message_received.startswith('/add'):
+            parts = message_received.split()
+            if len(parts) >= 4 and parts[0] == "/add":
+                command, network, wallet_address, notify_token = parts[:4]
+                tracking_wallets = utils.get_tracking_wallets(network)
+                al.add_tracking_addresses(tracking_wallets['webhook_id'], [wallet_address])
+                tracking_wallets[wallet_address] = notify_token
+                utils.update_json(f'{network}_wallets.json', tracking_wallets)
+                reply_message = f"Successfully added new tracking address!\n" \
+                                f"Network: {network.upper()}\n" \
+                                f"Wallet Address: {wallet_address}\n" \
+                                f"Line Notify Token: {notify_token}"
+            else:
+                reply_message = f"Invalid input format.\n" \
+                                f"/add <eth/goerli> <wallet_address> <line_notify_token>'"
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
+                    reply_token=reply_token,
+                    messages=[TextMessage(text=reply_message)]
+                )
+            )
 
 
 @app.route('/alchemy', methods=['POST'])
@@ -93,4 +133,5 @@ def alchemy():
 
 
 if __name__ == '__main__':
+    initial_checks.check()
     app.run()
