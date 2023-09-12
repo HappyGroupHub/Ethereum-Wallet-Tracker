@@ -111,7 +111,7 @@ def get_normal_transactions(wallet_address, goerli=False, start_block=0, end_blo
     :param int end_block: End block, default is 99999999
     :param int page: Page, default is 1
     :param int offset: The number of transactions displayed per page, default is 10
-    :param str sort: Sorting preference, asc or desc, default is desc
+    :param str sort: Sortin`g preference, asc or desc, default is desc
     :rtype: list
     """
     url = get_api_url('account', 'txlist', goerli=goerli, address=wallet_address,

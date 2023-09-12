@@ -1,4 +1,5 @@
 """This is the main file of the project."""
+
 from flask import Flask, request, Response, abort
 from flask.logging import create_logger
 from linebot.v3 import WebhookHandler
@@ -10,6 +11,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 import alchemy as al
 import etherscan as eth
 import initial_checks
+import line_notify
 import utilities as utils
 
 config = utils.read_config()
@@ -80,6 +82,7 @@ def handle_message(event):
 
 @app.route('/alchemy', methods=['POST'])
 def alchemy():
+    global wallet_balance, line_notify_token
     json_received = request.json
     print(json_received)
     try:
@@ -90,28 +93,40 @@ def alchemy():
         pass
     if json_received['type'] == 'ADDRESS_ACTIVITY':
         if json_received['event']['activity'][0]['category'] == 'external':
-            tracking_wallets = utils.get_tracking_wallets()
-            if json_received['event']['activity'][0]['fromAddress'] in tracking_wallets:
-                target = json_received['event']['activity'][0]['fromAddress']
-            else:
-                target = json_received['event']['activity'][0]['toAddress']
             txn = dict
             if json_received['event']['network'] == 'ETH_MAINNET':
+                tracking_wallets = utils.get_tracking_wallets('eth')
+                address_list = [key.lower() for key in tracking_wallets.keys()]
+                if json_received['event']['activity'][0]['fromAddress'] in address_list:
+                    target = json_received['event']['activity'][0]['fromAddress']
+                else:
+                    target = json_received['event']['activity'][0]['toAddress']
                 txn = eth.get_normal_transactions(target,
-                                                  start_block=int(json_received['event'][
-                                                                      'activity'][0][
-                                                                      'blockNum'], 16))[0]
+                                                  start_block=int(json_received['event']
+                                                                  ['activity'][0]
+                                                                  ['blockNum'], 16))[0]
                 txn = eth.format_txn(txn)
-            elif json_received['event']['network'] == 'ETH_GOERLI':
-                txn = eth.get_normal_transactions(target, goerli=True,
-                                                  start_block=int(json_received['event'][
-                                                                      'activity'][0][
-                                                                      'blockNum'], 16))[0]
+                wallet_balance = eth.get_wallet_balance(target).get('balance')
+                print('mainnet')
                 print(txn)
+                line_notify_token = tracking_wallets[target]
+            elif json_received['event']['network'] == 'ETH_GOERLI':
+                tracking_wallets = utils.get_tracking_wallets('goerli')
+                address_list = [key.lower() for key in tracking_wallets.keys()]
+                if json_received['event']['activity'][0]['fromAddress'] in address_list:
+                    target = json_received['event']['activity'][0]['fromAddress']
+                else:
+                    target = json_received['event']['activity'][0]['toAddress']
+                target = str(target)
+                txn = eth.get_normal_transactions(target, goerli=True,
+                                                  start_block=int(json_received['event']
+                                                                  ['activity'][0]
+                                                                  ['blockNum'], 16))[0]
                 txn = eth.format_txn(txn, goerli=True)
-            print('out')
-            print(txn)
-            print('out2')
+                wallet_balance = eth.get_wallet_balance(target, goerli=True).get('balance')
+                print('goerli')
+                line_notify_token = tracking_wallets[target]
+
             message = f"""
             New Transaction Found!
             ------------------------------------
@@ -122,10 +137,10 @@ def alchemy():
             Action: {txn['action']}
             Gas Price: {txn['gas_price']} Gwei ({txn['gas_fee_usd']}) USD
             ------------------------------------
-            Current Balance: {eth.get_wallet_balance(target).get('balance')} ETH
+            Current Balance: {wallet_balance} ETH
             {txn['txn_url']}
             """
-            print(message)
+            line_notify.send_message(message, line_notify_token)
             return Response(status=200)
         return Response(status=200)
 

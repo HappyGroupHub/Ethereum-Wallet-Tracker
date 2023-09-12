@@ -4,10 +4,9 @@ import utilities as utils
 
 config = utils.read_config()
 wallet_address = config.get('wallet_address')
-token = config.get('line_notify_token')
 
 
-def send_message(message):
+def send_message(message, token):
     """Send message to LINE Notify.
     :param str message: Message to send.
     """
