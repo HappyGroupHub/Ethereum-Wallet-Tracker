@@ -2,6 +2,7 @@
 config.yml
 eth_wallets.json
 goerli_wallets.json
+notify_token_pairs.json
 
 # Logs
 *.log
