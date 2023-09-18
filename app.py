@@ -43,6 +43,21 @@ def callback():
     return 'OK'
 
 
+@app.route("/notify", methods=['POST'])
+def notify():
+    body = request.get_data(as_text=True)
+    log.info("Request body: %s", body)
+    auth_code = request.form.get('code')
+    user_id = request.form.get('state')
+
+    notify_token = line_notify.get_notify_token_by_auth_code(auth_code)
+    utils.add_notify_token_by_user_id(user_id, notify_token)
+
+    show_message = f"Successfully connected to LINE Notify!\n" \
+                   f"You may now close this page now."
+    return show_message
+
+
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     with ApiClient(configuration) as api_client:
@@ -50,7 +65,8 @@ def handle_message(event):
         message_received = event.message.text
         reply_token = event.reply_token
         if message_received == 'test':
-            reply_message = 'test'
+            res = line_notify.create_auth_link(event.source.user_id)
+            reply_message = res
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
                     reply_token=reply_token,

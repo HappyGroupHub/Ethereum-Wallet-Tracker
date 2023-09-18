@@ -1,10 +1,10 @@
 """This python will handle some extra functions."""
+import datetime
 import json
 import sys
-import datetime
-import pytz
 from os.path import exists
 
+import pytz
 import yaml
 from yaml import SafeLoader
 
@@ -32,8 +32,12 @@ alchemy_webhook_auth_token: ''
 # Line Bot Tokens
 line_channel_access_token: ''
 line_channel_secret: ''
+
+# Line notify
+line_notify_id: ''
+line_notify_secret: ''
 """
-                )
+                   )
         file.close()
     sys.exit()
 
@@ -59,7 +63,9 @@ def read_config():
                 'etherscan_api_key': data['etherscan_api_key'],
                 'alchemy_webhook_auth_token': data['alchemy_webhook_auth_token'],
                 'line_channel_access_token': data['line_channel_access_token'],
-                'line_channel_secret': data['line_channel_secret']
+                'line_channel_secret': data['line_channel_secret'],
+                'line_notify_id': data['line_notify_id'],
+                'line_notify_secret': data['line_notify_secret']
             }
             file.close()
             return config
@@ -84,6 +90,17 @@ def update_json(file, data):
     with open(file, 'w', encoding="utf8") as file:
         json.dump(data, file, indent=4)
         file.close()
+
+
+def add_notify_token_by_user_id(user_id, notify_token):
+    """Add notify token by user id.
+
+    :param str user_id: The user id of the user.
+    :param str notify_token: The notify token of the user.
+    """
+    data = json.load(open('notify_token_pairs.json', 'r', encoding="utf8"))
+    data[user_id] = notify_token
+    update_json('notify_token_pairs.json', data)
 
 
 def wei_to_eth(wei):

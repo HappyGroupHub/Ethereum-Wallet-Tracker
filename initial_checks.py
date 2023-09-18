@@ -31,3 +31,8 @@ def check():
         webhook_id = results['data']['id']
         new_dict = {'webhook_id': webhook_id}
         utils.update_json('goerli_wallets.json', new_dict)
+    if not exists('./notify_token_pairs.json'):
+        print("Line user_id to notify_token pairs file not found, creating one by default.")
+        with open('notify_token_pairs.json', 'w', encoding="utf8") as file:
+            file.write("{}")
+        file.close()

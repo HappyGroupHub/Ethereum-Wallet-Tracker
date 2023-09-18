@@ -1,16 +1,53 @@
+import json
+import urllib
+
 import requests
 
 import utilities as utils
 
 config = utils.read_config()
-wallet_address = config.get('wallet_address')
+webhook_url = config['webhook_url']
+line_notify_id = config['line_notify_id']
+line_notify_secret = config['line_notify_secret']
 
 
 def send_message(message, token):
     """Send message to LINE Notify.
+
     :param str message: Message to send.
+    :param str token: LINE Notify token.
     """
     headers = {"Authorization": "Bearer " + token}
     data = {'message': '\n' + message}
     requests.post("https://notify-api.line.me/api/notify",
                   headers=headers, data=data, timeout=5)
+
+
+def create_auth_link(user_id):
+    data = {
+        'response_type': 'code',
+        'client_id': line_notify_id,
+        'redirect_uri': webhook_url + '/notify',
+        'scope': 'notify',
+        'state': user_id,
+        'response_mode': 'form_post'
+    }
+    query_str = urllib.parse.urlencode(data)
+    return f'https://notify-bot.line.me/oauth/authorize?{query_str}'
+
+
+def get_notify_token_by_auth_code(auth_code):
+    url = 'https://notify-bot.line.me/oauth/token'
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    data = {
+        'grant_type': 'authorization_code',
+        'code': auth_code,
+        'redirect_uri': webhook_url + '/notify',
+        'client_id': line_notify_id,
+        'client_secret': line_notify_secret
+    }
+    response = requests.post(url, data=data, headers=headers)
+    notify_token = response.json()['access_token']
+    return notify_token
