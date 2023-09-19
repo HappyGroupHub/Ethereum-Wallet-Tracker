@@ -24,6 +24,11 @@ def send_message(message, token):
 
 
 def create_auth_link(user_id):
+    """Create LINE Notify auth link for user to connect.
+
+    :param str user_id: The line user_id of the user.
+    :return str: The auth link.
+    """
     data = {
         'response_type': 'code',
         'client_id': line_notify_id,
@@ -37,6 +42,11 @@ def create_auth_link(user_id):
 
 
 def get_notify_token_by_auth_code(auth_code):
+    """Get LINE Notify token by auth code.
+
+    :param str auth_code: The auth code.
+    :return str: Line notify token of the user.
+    """
     url = 'https://notify-bot.line.me/oauth/token'
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded'

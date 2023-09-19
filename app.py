@@ -54,7 +54,7 @@ def notify():
     utils.add_notify_token_by_user_id(user_id, notify_token)
 
     show_message = f"Successfully connected to LINE Notify!\n" \
-                   f"You may now close this page now."
+                   f"You may now close this page."
     return show_message
 
 
