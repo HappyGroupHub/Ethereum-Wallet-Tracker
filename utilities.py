@@ -103,6 +103,46 @@ def add_notify_token_by_user_id(user_id, notify_token):
     update_json('notify_token_pairs.json', data)
 
 
+def get_notify_token_by_user_id(user_id):
+    """Get line notify token by user id.
+
+    :param str user_id: The user id of the user.
+    :return str: The notify token of the user.
+    """
+    data = json.load(open('notify_token_pairs.json', 'r', encoding="utf8"))
+    if user_id not in data:
+        return None
+    return data[user_id]
+
+
+def add_tracking_address_by_user_id(user_id, network, address):
+    """Add tracking address by line user id.
+
+    :param str user_id: The line user id of the user.
+    :param str network: The network of the address.
+    :param str address: The address to add.
+    """
+    data = json.load(open('user_tracking_list.json', 'r', encoding="utf8"))
+    if user_id not in data[network]:
+        data[network][user_id] = [address]
+    else:
+        data[network][user_id].append(address)
+    update_json('user_tracking_list.json', data)
+
+
+def get_tracking_addresses_by_user_id(user_id, network):
+    """Get tracking addresses by line user id.
+
+    :param str user_id: The line user id of the user.
+    :param str network: Network type you would like to search.
+    :return list: The list of tracking addresses.
+    """
+    data = json.load(open('user_tracking_list.json', 'r', encoding="utf8"))
+    if user_id not in data[network]:
+        return None
+    return data[network][user_id]
+
+
 def wei_to_eth(wei):
     """Convert wei to eth.
 

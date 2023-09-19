@@ -36,3 +36,11 @@ def check():
         with open('notify_token_pairs.json', 'w', encoding="utf8") as file:
             file.write("{}")
         file.close()
+    if not exists('./user_tracking_list.json'):
+        print("User tracking list not found, creating one by default.")
+        with open('user_tracking_list.json', 'w', encoding="utf8") as file:
+            file.write("""{
+      "eth": {},
+      "goerli": {}
+    }""")
+        file.close()

@@ -62,11 +62,12 @@ def notify():
 def handle_message(event):
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
+        user_id = event.source.user_id
         message_received = event.message.text
         reply_token = event.reply_token
-        if message_received == 'test':
-            res = line_notify.create_auth_link(event.source.user_id)
-            reply_message = res
+        if message_received == '/connect':
+            auth_link = line_notify.create_auth_link(user_id)
+            reply_message = auth_link
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
                     reply_token=reply_token,
@@ -74,20 +75,45 @@ def handle_message(event):
                 )
             )
         if message_received.startswith('/add'):
-            parts = message_received.split()
-            if len(parts) >= 4 and parts[0] == "/add":
-                command, network, wallet_address, notify_token = parts[:4]
-                tracking_wallets = utils.get_tracking_wallets(network)
-                al.add_tracking_addresses(tracking_wallets['webhook_id'], [wallet_address])
-                tracking_wallets[wallet_address.lower()] = notify_token
-                utils.update_json(f'{network}_wallets.json', tracking_wallets)
-                reply_message = f"Successfully added new tracking address!\n" \
-                                f"Network: {network.upper()}\n" \
-                                f"Wallet Address: {wallet_address}\n" \
-                                f"Line Notify Token: {notify_token}"
+            notify_token = utils.get_notify_token_by_user_id(user_id)
+            if notify_token is None:
+                reply_message = f"Please connect your Line Notify first!\n" \
+                                f"Use /connect to connect it."
             else:
-                reply_message = f"Invalid input format.\n" \
-                                f"/add <eth/goerli> <wallet_address> <line_notify_token>"
+                parts = message_received.split()
+                if len(parts) >= 2 and parts[0] == "/add":
+                    command, wallet_address = parts[:2]
+                    tracking_wallets = utils.get_tracking_wallets('eth')
+                    if wallet_address.lower() not in tracking_wallets:
+                        al.add_tracking_address(tracking_wallets['webhook_id'], wallet_address)
+                        tracking_wallets[wallet_address.lower()] = [notify_token]
+                    else:
+                        tracking_wallets[wallet_address.lower()].append(notify_token)
+                    utils.update_json('eth_wallets.json', tracking_wallets)
+                    utils.add_tracking_address_by_user_id(user_id, 'eth', wallet_address)
+                    reply_message = f"Successfully added new tracking address!\n" \
+                                    f"Network: Ethereum\n" \
+                                    f"Wallet Address: {wallet_address}"
+                    line_notify.send_message(reply_message, notify_token)
+                    reply_message = f"Successfully added new tracking address!"
+                else:
+                    reply_message = f"Invalid input format.\n" \
+                                    f"/add <wallet_address>"
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
+                    reply_token=reply_token,
+                    messages=[TextMessage(text=reply_message)]
+                )
+            )
+        if message_received == '/list':
+            tracking_wallets = utils.get_tracking_addresses_by_user_id(user_id, 'eth')
+            if tracking_wallets is None:
+                reply_message = f"You have not added any tracking address yet!\n" \
+                                f"Use /add <wallet_address> to add one."
+            else:
+                reply_message = f"Tracking Wallets:\n"
+                for wallet in tracking_wallets:
+                    reply_message += f"{wallet}\n"
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
                     reply_token=reply_token,

@@ -57,16 +57,16 @@ def get_all_tracking_addresses(webhook_id):
     return response.json()
 
 
-def add_tracking_addresses(webhook_id, addresses):
+def add_tracking_address(webhook_id, address):
     """Add tracking address to alchemy webhook.
 
     :param str webhook_id: The id of alchemy address activity webhook.
-    :param list addresses: The addresses to add.
+    :param str address: The address to add.
     :return:
     """
     url = "https://dashboard.alchemy.com/api/update-webhook-addresses"
     payload = {
-        "addresses_to_add": addresses,
+        "addresses_to_add": [address],
         "addresses_to_remove": [],
         "webhook_id": webhook_id
     }
@@ -79,17 +79,17 @@ def add_tracking_addresses(webhook_id, addresses):
     return response.json()
 
 
-def remove_tracking_addresses(webhook_id, addresses):
+def remove_tracking_address(webhook_id, address):
     """Remove tracking address from alchemy webhook.
 
     :param str webhook_id: The id of alchemy address activity webhook.
-    :param list addresses: The addresses to remove.
+    :param list address: The address to remove.
     :return:
     """
     url = "https://dashboard.alchemy.com/api/update-webhook-addresses"
     payload = {
         "addresses_to_add": [],
-        "addresses_to_remove": addresses,
+        "addresses_to_remove": [address],
         "webhook_id": webhook_id
     }
     headers = {
