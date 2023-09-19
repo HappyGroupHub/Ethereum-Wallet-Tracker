@@ -6,7 +6,7 @@ from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, \
     TextMessage
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
+from linebot.v3.webhooks import MessageEvent, TextMessageContent, FollowEvent
 
 import alchemy as al
 import etherscan as eth
@@ -94,6 +94,23 @@ def handle_message(event):
                     messages=[TextMessage(text=reply_message)]
                 )
             )
+
+
+@handler.add(FollowEvent)
+def handle_follow(event):
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        reply_token = event.reply_token
+        auth_link = line_notify.create_auth_link(event.source.user_id)
+        reply_message = f"Welcome to the Ethereum Wallet Tracker!\n" \
+                        f"Please connect your Line Notify by the following link first!\n" \
+                        f"\n{auth_link}"
+        line_bot_api.reply_message_with_http_info(
+            ReplyMessageRequest(
+                reply_token=reply_token,
+                messages=[TextMessage(text=reply_message)]
+            )
+        )
 
 
 @app.route('/alchemy', methods=['POST'])
