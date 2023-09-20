@@ -81,9 +81,11 @@ def handle_message(event):
                                 f"Use /connect to connect it."
             else:
                 parts = message_received.split()
-                if len(parts) >= 2 and parts[0] == "/add":
-                    command, wallet_address = parts[:2]
+                command, wallet_address = parts[:2]
+                if len(parts) >= 2:
                     network = 'ETH_MAINNET'
+                    if len(parts) == 3 and parts[2] == 'test':
+                        network = 'ETH_GOERLI'
                     wallet_address = wallet_address.lower()
                     tracking_wallets = utils.get_tracking_wallets(network)
                     if wallet_address not in tracking_wallets:
@@ -91,7 +93,7 @@ def handle_message(event):
                     utils.add_tracking_wallet(network, wallet_address, notify_token)
                     utils.add_tracking_address_by_user_id(user_id, network, wallet_address)
                     reply_message = f"Successfully added new tracking address!\n" \
-                                    f"Network: Ethereum\n" \
+                                    f"Network: {network}\n" \
                                     f"Wallet Address: {wallet_address}"
                     line_notify.send_message(reply_message, notify_token)
                     reply_message = f"Successfully added new tracking address!"
@@ -104,13 +106,17 @@ def handle_message(event):
                     messages=[TextMessage(text=reply_message)]
                 )
             )
-        if message_received == '/list':
-            tracking_wallets = utils.get_tracking_addresses_by_user_id(user_id, 'eth')
+        if message_received.startswith('/list'):
+            parts = message_received.split()
+            network = 'ETH_MAINNET'
+            if len(parts) == 2:
+                network = 'ETH_GOERLI'
+            tracking_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
             if tracking_wallets is None:
                 reply_message = f"You have not added any tracking address yet!\n" \
                                 f"Use /add <wallet_address> to add one."
             else:
-                reply_message = f"Tracking Wallets:\n"
+                reply_message = f"Tracking Wallets in {network}:\n"
                 for wallet in tracking_wallets:
                     reply_message += f"{wallet}\n"
             line_bot_api.reply_message_with_http_info(
