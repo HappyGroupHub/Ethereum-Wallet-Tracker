@@ -77,8 +77,28 @@ def read_config():
 
 
 def get_tracking_wallets(network):
-    data = json.load(open(f'{network}_wallets.json', 'r', encoding="utf8"))
-    return data
+    """Get tracking wallets from tracking_wallets.json.
+
+    :param str network: The network of the target. (ETH_MAINNET or ETH_GOERLI)
+    :return dict: Tracking wallets of the network.
+    """
+    data = json.load(open('tracking_wallets.json', 'r', encoding="utf8"))
+    return data[network]
+
+
+def add_tracking_wallet(network, address, notify_token):
+    """Add tracking wallet to tracking_wallets.json.
+
+    :param str network: The network of the target. (ETH_MAINNET or ETH_GOERLI)
+    :param str address: The address to add.
+    :param str notify_token: The notify token of the user.
+    """
+    data = json.load(open('tracking_wallets.json', 'r', encoding="utf8"))
+    if address not in data[network]:
+        data[network][address] = [notify_token]
+    else:
+        data[network][address].append(notify_token)
+    update_json('tracking_wallets.json', data)
 
 
 def update_json(file, data):

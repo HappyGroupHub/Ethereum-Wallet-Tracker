@@ -83,14 +83,13 @@ def handle_message(event):
                 parts = message_received.split()
                 if len(parts) >= 2 and parts[0] == "/add":
                     command, wallet_address = parts[:2]
-                    tracking_wallets = utils.get_tracking_wallets('eth')
-                    if wallet_address.lower() not in tracking_wallets:
+                    network = 'ETH_MAINNET'
+                    wallet_address = wallet_address.lower()
+                    tracking_wallets = utils.get_tracking_wallets(network)
+                    if wallet_address not in tracking_wallets:
                         al.add_tracking_address(tracking_wallets['webhook_id'], wallet_address)
-                        tracking_wallets[wallet_address.lower()] = [notify_token]
-                    else:
-                        tracking_wallets[wallet_address.lower()].append(notify_token)
-                    utils.update_json('eth_wallets.json', tracking_wallets)
-                    utils.add_tracking_address_by_user_id(user_id, 'eth', wallet_address)
+                    utils.add_tracking_wallet(network, wallet_address, notify_token)
+                    utils.add_tracking_address_by_user_id(user_id, network, wallet_address)
                     reply_message = f"Successfully added new tracking address!\n" \
                                     f"Network: Ethereum\n" \
                                     f"Wallet Address: {wallet_address}"

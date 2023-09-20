@@ -6,6 +6,7 @@ import requests
 import utilities as utils
 
 config = utils.read_config()
+webhook_url = config.get('webhook_url')
 
 alchemy_webhook_auth_token = config.get('alchemy_webhook_auth_token')
 
@@ -19,18 +20,17 @@ requests_log.setLevel(logging.DEBUG)
 requests_log.propagate = True
 
 
-def create_address_activity_webhook(network, webhook_url):
+def create_address_activity_webhook(network):
     """Create an address activity alchemy webhook.
 
     :param str network: The network of the webhook.
-    :param str webhook_url: The url of the webhook.
-    :rtype: dict
+    :return str webhook_id: The id of the webhook.
     """
     url = "https://dashboard.alchemy.com/api/create-webhook"
     payload = {
         "network": network,
         "webhook_type": "ADDRESS_ACTIVITY",
-        "webhook_url": webhook_url,
+        "webhook_url": webhook_url + "/alchemy",
         "addresses": ["0x92A5148906D08254Dfc9E4007cEAAE37d8c3DDd9"]
     }
     headers = {
@@ -39,7 +39,8 @@ def create_address_activity_webhook(network, webhook_url):
         "content-type": "application/json"
     }
     response = requests.post(url, json=payload, headers=headers)
-    return response.json()
+    webhook_id = response.json()['data']['id']
+    return webhook_id
 
 
 def get_all_tracking_addresses(webhook_id):
