@@ -79,6 +79,11 @@ def read_config():
 def get_tracking_wallets(network):
     """Get tracking wallets from tracking_wallets.json.
 
+    This is the file that saved all the tracking info's from alchemy webhooks.
+    Structure of the file should start with a network_type key and the value should be a dict.
+    The dict should contain a webhook_id key value pair, then the address key should return a list
+    of line_notify_token values.
+
     :param str network: The network of the target. (ETH_MAINNET or ETH_GOERLI)
     :return dict: Tracking wallets of the network.
     """
@@ -88,6 +93,11 @@ def get_tracking_wallets(network):
 
 def add_tracking_wallet(network, address, notify_token):
     """Add tracking wallet to tracking_wallets.json.
+
+    This is the file that saved all the tracking info's from alchemy webhooks.
+    Structure of the file should start with a network_type key and the value should be a dict.
+    The dict should contain a webhook_id key value pair, then the address key should return a list
+    of line_notify_token values.
 
     :param str network: The network of the target. (ETH_MAINNET or ETH_GOERLI)
     :param str address: The address to add.
@@ -104,6 +114,11 @@ def add_tracking_wallet(network, address, notify_token):
 def remove_tracking_wallet(network, address, notify_token):
     """Remove tracking wallet from tracking_wallets.json.
 
+    This is the file that saved all the tracking info's from alchemy webhooks.
+    Structure of the file should start with a network_type key and the value should be a dict.
+    The dict should contain a webhook_id key value pair, then the address key should return a list
+    of line_notify_token values.
+
     :param str network: The network of the target. (ETH_MAINNET or ETH_GOERLI)
     :param str address: The address to remove.
     :param str notify_token: The notify token of the user.
@@ -114,17 +129,6 @@ def remove_tracking_wallet(network, address, notify_token):
     else:
         data[network][address].remove(notify_token)
     update_json('tracking_wallets.json', data)
-
-
-def update_json(file, data):
-    """Update a json file.
-
-    :param str file: The file to update.
-    :param dict data: The data to update.
-    """
-    with open(file, 'w', encoding="utf8") as file:
-        json.dump(data, file, indent=4)
-        file.close()
 
 
 def add_notify_token_by_user_id(user_id, notify_token):
@@ -150,8 +154,29 @@ def get_notify_token_by_user_id(user_id):
     return data[user_id]
 
 
+def get_tracking_addresses_by_user_id(user_id, network):
+    """Get tracking addresses by line user id from user_tracking_list.json.
+
+    This is the file that saved all tracking addresses based on a line user id.
+    Structure of the file should start with a network_type key and the value should be a dict.
+    The dict should contain a line user id as key, and a list of addresses as value.
+
+    :param str user_id: The line user id of the user.
+    :param str network: Network type you would like to search.
+    :return list: The list of tracking addresses.
+    """
+    data = json.load(open('user_tracking_list.json', 'r', encoding="utf8"))
+    if user_id not in data[network]:
+        return None
+    return data[network][user_id]
+
+
 def add_tracking_address_by_user_id(user_id, network, address):
     """Add tracking address by line user id to user_tracking_list.json.
+
+    This is the file that saved all tracking addresses based on a line user id.
+    Structure of the file should start with a network_type key and the value should be a dict.
+    The dict should contain a line user id as key, and a list of addresses as value.
 
     :param str user_id: The line user id of the user.
     :param str network: The network of the address.
@@ -168,6 +193,10 @@ def add_tracking_address_by_user_id(user_id, network, address):
 def remove_tracking_address_by_user_id(user_id, network, address):
     """Remove tracking address by line user id from user_tracking_list.json.
 
+    This is the file that saved all tracking addresses based on a line user id.
+    Structure of the file should start with a network_type key and the value should be a dict.
+    The dict should contain a line user id as key, and a list of addresses as value.
+
     :param str user_id: The line user id of the user.
     :param str network: The network of the address.
     :param str address: The address to remove.
@@ -180,17 +209,15 @@ def remove_tracking_address_by_user_id(user_id, network, address):
     update_json('user_tracking_list.json', data)
 
 
-def get_tracking_addresses_by_user_id(user_id, network):
-    """Get tracking addresses by line user id from user_tracking_list.json.
+def update_json(file, data):
+    """Update a json file.
 
-    :param str user_id: The line user id of the user.
-    :param str network: Network type you would like to search.
-    :return list: The list of tracking addresses.
+    :param str file: The file to update.
+    :param dict data: The data to update.
     """
-    data = json.load(open('user_tracking_list.json', 'r', encoding="utf8"))
-    if user_id not in data[network]:
-        return None
-    return data[network][user_id]
+    with open(file, 'w', encoding="utf8") as file:
+        json.dump(data, file, indent=4)
+        file.close()
 
 
 def wei_to_eth(wei):
