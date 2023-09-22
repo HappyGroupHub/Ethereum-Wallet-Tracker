@@ -81,8 +81,8 @@ def handle_message(event):
                                 f"Use /connect to connect it."
             else:
                 parts = message_received.split()
-                command, wallet_address = parts[:2]
                 if len(parts) >= 2:
+                    command, wallet_address = parts[:2]
                     network = 'ETH_MAINNET'
                     if len(parts) == 3 and parts[2] == 'test':
                         network = 'ETH_GOERLI'
@@ -100,6 +100,42 @@ def handle_message(event):
                 else:
                     reply_message = f"Invalid input format.\n" \
                                     f"/add <wallet_address>"
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
+                    reply_token=reply_token,
+                    messages=[TextMessage(text=reply_message)]
+                )
+            )
+        if message_received.startswith('/remove'):
+            notify_token = utils.get_notify_token_by_user_id(user_id)
+            if notify_token is None:
+                reply_message = f"Please connect your Line Notify first!\n" \
+                                f"Use /connect to connect it."
+            else:
+                parts = message_received.split()
+                if len(parts) >= 2:
+                    command, wallet_address = parts[:2]
+                    network = 'ETH_MAINNET'
+                    if len(parts) == 3 and parts[2] == 'test':
+                        network = 'ETH_GOERLI'
+                    wallet_address = wallet_address.lower()
+                    tracking_wallets = utils.get_tracking_wallets(network)
+                    if wallet_address not in tracking_wallets:
+                        reply_message = f"Wallet address not found in tracking list!\n"\
+                                        f"Use /list to see all tracking addresses."
+                    else:
+                        if len(tracking_wallets[wallet_address]) == 1:
+                            al.remove_tracking_address(tracking_wallets['webhook_id'], wallet_address)
+                        utils.remove_tracking_wallet(network, wallet_address, notify_token)
+                        utils.remove_tracking_address_by_user_id(user_id, network, wallet_address)
+                        reply_message = f"Successfully removed one tracking address!\n" \
+                                        f"Network: {network}\n" \
+                                        f"Wallet Address: {wallet_address}"
+                        line_notify.send_message(reply_message, notify_token)
+                        reply_message = f"Successfully removed one tracking address!"
+                else:
+                    reply_message = f"Invalid input format.\n" \
+                                    f"/remove <wallet_address>"
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
                     reply_token=reply_token,

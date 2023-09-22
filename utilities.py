@@ -101,6 +101,21 @@ def add_tracking_wallet(network, address, notify_token):
     update_json('tracking_wallets.json', data)
 
 
+def remove_tracking_wallet(network, address, notify_token):
+    """Remove tracking wallet from tracking_wallets.json.
+
+    :param str network: The network of the target. (ETH_MAINNET or ETH_GOERLI)
+    :param str address: The address to remove.
+    :param str notify_token: The notify token of the user.
+    """
+    data = json.load(open('tracking_wallets.json', 'r', encoding="utf8"))
+    if len(data[network][address]) == 1:
+        data[network].pop(address)
+    else:
+        data[network][address].remove(notify_token)
+    update_json('tracking_wallets.json', data)
+
+
 def update_json(file, data):
     """Update a json file.
 
@@ -136,7 +151,7 @@ def get_notify_token_by_user_id(user_id):
 
 
 def add_tracking_address_by_user_id(user_id, network, address):
-    """Add tracking address by line user id.
+    """Add tracking address by line user id to user_tracking_list.json.
 
     :param str user_id: The line user id of the user.
     :param str network: The network of the address.
@@ -150,8 +165,23 @@ def add_tracking_address_by_user_id(user_id, network, address):
     update_json('user_tracking_list.json', data)
 
 
+def remove_tracking_address_by_user_id(user_id, network, address):
+    """Remove tracking address by line user id from user_tracking_list.json.
+
+    :param str user_id: The line user id of the user.
+    :param str network: The network of the address.
+    :param str address: The address to remove.
+    """
+    data = json.load(open('user_tracking_list.json', 'r', encoding="utf8"))
+    if len(data[network][user_id]) == 1:
+        data[network].pop(user_id)
+    else:
+        data[network][user_id].remove(address)
+    update_json('user_tracking_list.json', data)
+
+
 def get_tracking_addresses_by_user_id(user_id, network):
-    """Get tracking addresses by line user id.
+    """Get tracking addresses by line user id from user_tracking_list.json.
 
     :param str user_id: The line user id of the user.
     :param str network: Network type you would like to search.
