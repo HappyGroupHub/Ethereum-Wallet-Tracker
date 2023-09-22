@@ -167,7 +167,7 @@ def get_tracking_addresses_by_user_id(user_id, network):
     """
     data = json.load(open('user_tracking_list.json', 'r', encoding="utf8"))
     if user_id not in data[network]:
-        return None
+        return []
     return data[network][user_id]
 
 

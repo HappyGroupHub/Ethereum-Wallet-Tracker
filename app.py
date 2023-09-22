@@ -88,15 +88,20 @@ def handle_message(event):
                         network = 'ETH_GOERLI'
                     wallet_address = wallet_address.lower()
                     tracking_wallets = utils.get_tracking_wallets(network)
-                    if wallet_address not in tracking_wallets:
-                        al.add_tracking_address(tracking_wallets['webhook_id'], wallet_address)
-                    utils.add_tracking_wallet(network, wallet_address, notify_token)
-                    utils.add_tracking_address_by_user_id(user_id, network, wallet_address)
-                    reply_message = f"Successfully added new tracking address!\n" \
-                                    f"Network: {network}\n" \
-                                    f"Wallet Address: {wallet_address}"
-                    line_notify.send_message(reply_message, notify_token)
-                    reply_message = f"Successfully added new tracking address!"
+                    user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
+                    if wallet_address in user_tracked_wallets:
+                        reply_message = f"Wallet address has already been added before!\n"\
+                                        f"Use /list to see all tracking addresses."
+                    else:
+                        if wallet_address not in tracking_wallets:
+                            al.add_tracking_address(tracking_wallets['webhook_id'], wallet_address)
+                        utils.add_tracking_wallet(network, wallet_address, notify_token)
+                        utils.add_tracking_address_by_user_id(user_id, network, wallet_address)
+                        reply_message = f"Successfully added new tracking address!\n" \
+                                        f"Network: {network}\n" \
+                                        f"Wallet Address: {wallet_address}"
+                        line_notify.send_message(reply_message, notify_token)
+                        reply_message = f"Successfully added new tracking address!"
                 else:
                     reply_message = f"Invalid input format.\n" \
                                     f"/add <wallet_address>"
@@ -147,13 +152,13 @@ def handle_message(event):
             network = 'ETH_MAINNET'
             if len(parts) == 2:
                 network = 'ETH_GOERLI'
-            tracking_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
-            if tracking_wallets is None:
+            user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
+            if not user_tracked_wallets:
                 reply_message = f"You have not added any tracking address yet!\n" \
                                 f"Use /add <wallet_address> to add one."
             else:
                 reply_message = f"Tracking Wallets in {network}:\n"
-                for wallet in tracking_wallets:
+                for wallet in user_tracked_wallets:
                     reply_message += f"{wallet}\n"
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
