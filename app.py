@@ -191,7 +191,7 @@ def handle_follow(event):
 
 
 @app.route('/alchemy', methods=['POST'])
-def alchemy():
+async def alchemy():
     json_received = request.json
     print(json_received)
     try:
