@@ -20,7 +20,7 @@ def config_file_generator():
 # Paste your endpoint for the webhook here.
 # You can use ngrok to get a free static endpoint now!
 # Find out more here: https://ngrok.com/
-webhook_url: 'https://advanced-romantic-seagull.ngrok-free.app'
+webhook_url: ''
 
 # Paste your etherscan api key here.
 # You can get the api key from here: https://etherscan.io/myapikey
