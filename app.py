@@ -67,8 +67,11 @@ def handle_message(event):
         message_received = event.message.text
         reply_token = event.reply_token
         if message_received == '/connect':
-            auth_link = line_notify.create_auth_link(user_id)
-            reply_message = auth_link
+            if not utils.get_notify_token_by_user_id(user_id):
+                auth_link = line_notify.create_auth_link(user_id)
+                reply_message = auth_link
+            else:
+                reply_message = f"You have already connected your Line Notify!"
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
                     reply_token=reply_token,
