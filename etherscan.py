@@ -256,17 +256,20 @@ def get_json_response(url):
             continue
 
 
-def format_txn(txn, goerli=False):
+def format_txn(txn, target_address, goerli=False):
     """Format transaction
 
     :param dict txn: Transaction
+    :param str target_address: Target address
     :param bool goerli: If True, use goerli testnet, default is False
     :rtype: dict
     """
     if goerli:
         base_url = 'https://goerli.etherscan.io'
+        txn['wallet_balance'] = get_wallet_balance(target_address, goerli=True)['balance']
     else:
         base_url = 'https://etherscan.io'
+        txn['wallet_balance'] = get_wallet_balance(target_address)['balance']
     txn['txn_url'] = f'{base_url}/tx/{txn["hash"]}'
     txn['time'] = datetime.fromtimestamp(int(txn['timeStamp'])).strftime('%Y-%m-%d %H:%M:%S')
     txn['gas_price'] = utils.wei_to_gwei(int(txn['gasPrice']))

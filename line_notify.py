@@ -2,6 +2,7 @@ import urllib
 
 import requests
 
+import etherscan as eth
 import utilities as utils
 
 config = utils.read_config()
@@ -60,3 +61,42 @@ def get_notify_token_by_auth_code(auth_code):
     response = requests.post(url, data=data, headers=headers)
     notify_token = response.json()['access_token']
     return notify_token
+
+
+def send_notify(network, txn, txn_type, line_notify_tokens):
+    if network == 'ETH_MAINNET':
+        message = ''
+        if txn_type == 'normal':
+            message = f"New Transaction Found!\n" \
+                      f"------------------------------------\n" \
+                      f"From: {txn['from']}\n" \
+                      f"To: {txn['to']}\n" \
+                      f"Time: {txn['time']}\n" \
+                      f"Value: {txn['eth_value']} ETH\n" \
+                      f"Action: {txn['action']}\n" \
+                      f"Gas Price: {txn['gas_price']} Gwei ({txn['gas_fee_usd']}) USD\n" \
+                      f"------------------------------------\n" \
+                      f"Current Balance: {txn['wallet_balance']} ETH\n" \
+                      f"{txn['txn_url']}"
+        elif txn_type == 'internal':
+            pass
+        for token in line_notify_tokens:
+            send_message(message, token)
+    elif network == 'ETH_GOERLI':
+        message = ''
+        if txn_type == 'normal':
+            message = f"New Transaction Found!\n" \
+                      f"------------------------------------\n" \
+                      f"From: {txn['from']}\n" \
+                      f"To: {txn['to']}\n" \
+                      f"Time: {txn['time']}\n" \
+                      f"Value: {txn['eth_value']} ETH\n" \
+                      f"Action: {txn['action']}\n" \
+                      f"Gas Price: {txn['gas_price']} Gwei ({txn['gas_fee_usd']}) USD\n" \
+                      f"------------------------------------\n" \
+                      f"Current Balance: {txn['wallet_balance']} ETH\n" \
+                      f"{txn['txn_url']}"
+        elif txn_type == 'internal':
+            pass
+        for token in line_notify_tokens:
+            send_message(message, token)

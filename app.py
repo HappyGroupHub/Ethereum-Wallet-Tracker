@@ -252,21 +252,8 @@ async def verify_then_send_notify(network, target_address, txn_hash, txn_block_n
                 txns = eth.get_normal_transactions(target_address, start_block=txn_block_num)
                 for txn in txns:
                     if txn['hash'] == txn_hash:
-                        txn = eth.format_txn(txn)
-                        wallet_balance = eth.get_wallet_balance(target_address).get('balance')
-                        message = f"New Transaction Found!\n" \
-                                  f"------------------------------------\n" \
-                                  f"From: {txn['from']}\n" \
-                                  f"To: {txn['to']}\n" \
-                                  f"Time: {txn['time']}\n" \
-                                  f"Value: {txn['eth_value']} ETH\n" \
-                                  f"Action: {txn['action']}\n" \
-                                  f"Gas Price: {txn['gas_price']} Gwei ({txn['gas_fee_usd']}) USD\n" \
-                                  f"------------------------------------\n" \
-                                  f"Current Balance: {wallet_balance} ETH\n" \
-                                  f"{txn['txn_url']}"
-                        for line_notify_token in line_notify_tokens:
-                            line_notify.send_message(message, line_notify_token)
+                        txn = eth.format_txn(txn, target_address)
+                        line_notify.send_notify(network, txn, 'normal', line_notify_tokens)
                         break
                 break
             elif network == 'ETH_GOERLI':
@@ -274,25 +261,12 @@ async def verify_then_send_notify(network, target_address, txn_hash, txn_block_n
                                                    start_block=txn_block_num)
                 for txn in txns:
                     if txn['hash'] == txn_hash:
-                        txn = eth.format_txn(txn, goerli=True)
-                        wallet_balance = eth.get_wallet_balance(target_address, goerli=True).get(
-                            'balance')
-                        message = f"New Transaction Found!\n" \
-                                  f"------------------------------------\n" \
-                                  f"From: {txn['from']}\n" \
-                                  f"To: {txn['to']}\n" \
-                                  f"Time: {txn['time']}\n" \
-                                  f"Value: {txn['eth_value']} ETH\n" \
-                                  f"Action: {txn['action']}\n" \
-                                  f"Gas Price: {txn['gas_price']} Gwei ({txn['gas_fee_usd']}) USD\n" \
-                                  f"------------------------------------\n" \
-                                  f"Current Balance: {wallet_balance} ETH\n" \
-                                  f"{txn['txn_url']}"
-                        for line_notify_token in line_notify_tokens:
-                            line_notify.send_message(message, line_notify_token)
+                        txn = eth.format_txn(txn, target_address, goerli=True)
+                        line_notify.send_notify(network, txn, 'normal', line_notify_tokens)
                         break
                 break
-        except Exception:
+        except Exception as e:
+            print(e)
             print('New transaction not found, wait for 10 seconds and retry...')
             continue
 
