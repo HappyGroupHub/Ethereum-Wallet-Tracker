@@ -55,13 +55,19 @@ async def callback(request: Request):
 
 @app.post("/notify")
 async def notify(request: Request):
-    auth_code = request.form.get('code')
-    user_id = request.form.get('state')
+    response_form = await request.form()
+    auth_code = response_form['code']
+    user_id = response_form['state']
 
     notify_token = line_notify.get_notify_token_by_auth_code(auth_code)
     utils.add_notify_token_by_user_id(user_id, notify_token)
+    push_message = f"Successfully connected to Line Notify! " \
+                   f"You may now use /add <wallet_address> " \
+                   f"to start tracking your Ethereum Wallet.\n"  \
+                   f"Use /help to see all commands."
+    line_notify.send_message(push_message, notify_token)
 
-    show_message = f"Successfully connected to LINE Notify!\n" \
+    show_message = f"Successfully connected to LINE Notify! " \
                    f"You may now close this page."
     return show_message
 
@@ -186,8 +192,9 @@ def handle_follow(event):
         line_bot_api = MessagingApi(api_client)
         reply_token = event.reply_token
         auth_link = line_notify.create_auth_link(event.source.user_id)
-        reply_message = f"Welcome to the Ethereum Wallet Tracker!\n" \
+        reply_message = f"Welcome to the Ethereum Wallet Tracker! " \
                         f"Please connect your Line Notify by the following link first!\n" \
+                        f"(1-on-1 chat with Line Notify)\n" \
                         f"\n{auth_link}"
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
