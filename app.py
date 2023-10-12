@@ -63,7 +63,7 @@ async def notify(request: Request):
     utils.add_notify_token_by_user_id(user_id, notify_token)
     push_message = f"Successfully connected to Line Notify! " \
                    f"You may now use /add <wallet_address> " \
-                   f"to start tracking your Ethereum Wallet.\n"  \
+                   f"to start tracking your Ethereum Wallet.\n" \
                    f"Use /help to see all commands."
     line_notify.send_message(push_message, notify_token)
 
@@ -246,28 +246,21 @@ async def alchemy(request: Request):
 async def verify_then_send_notify(network, target_address, txn_hash, txn_block_num,
                                   line_notify_tokens):
     while True:
+        time.sleep(10)
+        txns = []
+        if network == 'ETH_MAINNET':
+            txns = eth.get_normal_transactions(target_address, start_block=txn_block_num)
+        elif network == 'ETH_GOERLI':
+            txns = eth.get_normal_transactions(target_address, goerli=True,
+                                               start_block=txn_block_num)
         try:
-            time.sleep(10)
-            if network == 'ETH_MAINNET':
-                txns = eth.get_normal_transactions(target_address, start_block=txn_block_num)
-                for txn in txns:
-                    if txn['hash'] == txn_hash:
-                        txn = eth.format_txn(txn, target_address)
-                        line_notify.send_notify(network, txn, 'normal', line_notify_tokens)
-                        break
-                break
-            elif network == 'ETH_GOERLI':
-                txns = eth.get_normal_transactions(target_address, goerli=True,
-                                                   start_block=txn_block_num)
-                for txn in txns:
-                    if txn['hash'] == txn_hash:
-                        txn = eth.format_txn(txn, target_address, goerli=True)
-                        line_notify.send_notify(network, txn, 'normal', line_notify_tokens)
-                        break
-                break
-        except Exception as e:
-            print(e)
-            print('New transaction not found, wait for 10 seconds and retry...')
+            for txn in txns:
+                if txn['hash'] == txn_hash:
+                    txn = eth.format_txn(txn, target_address)
+                    line_notify.send_notify(txn, 'normal', line_notify_tokens)
+                    break
+            break
+        except TypeError:
             continue
 
 
