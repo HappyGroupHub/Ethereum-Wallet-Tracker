@@ -1,6 +1,7 @@
 """This is the main file of the project."""
 import asyncio
 import time
+from threading import Thread
 
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
@@ -29,6 +30,7 @@ app.add_middleware(
 )
 
 config = utils.read_config()
+merging_txns = []
 configuration = Configuration(access_token=config['line_channel_access_token'])
 handler = WebhookHandler(config['line_channel_secret'])
 
@@ -214,33 +216,61 @@ async def alchemy(request: Request):
     except KeyError:
         pass
     if json_received['type'] == 'ADDRESS_ACTIVITY':
-        if json_received['event']['activity'][0]['category'] == 'external':
-            if json_received['event']['network'] == 'ETH_MAINNET':
-                tracking_wallets = utils.get_tracking_wallets('ETH_MAINNET')
-                address_list = [key.lower() for key in tracking_wallets.keys()]
-                if json_received['event']['activity'][0]['fromAddress'] in address_list:
-                    target = json_received['event']['activity'][0]['fromAddress']
-                else:
-                    target = json_received['event']['activity'][0]['toAddress']
-                target = str(target)
-                asyncio.create_task(
-                    verify_then_send_notify('ETH_MAINNET', target,
-                                            json_received['event']['activity'][0]['hash'],
-                                            int(json_received['event']['activity'][0]['blockNum'],
-                                                16), tracking_wallets[target]))
-            elif json_received['event']['network'] == 'ETH_GOERLI':
-                tracking_wallets = utils.get_tracking_wallets('ETH_GOERLI')
-                address_list = [key.lower() for key in tracking_wallets.keys()]
-                if json_received['event']['activity'][0]['fromAddress'] in address_list:
-                    target = json_received['event']['activity'][0]['fromAddress']
-                else:
-                    target = json_received['event']['activity'][0]['toAddress']
-                target = str(target)
-                asyncio.create_task(
-                    verify_then_send_notify('ETH_GOERLI', target,
-                                            json_received['event']['activity'][0]['hash'],
-                                            int(json_received['event']['activity'][0]['blockNum'],
-                                                16), tracking_wallets[target]))
+        if json_received['event']['network'] == 'ETH_MAINNET':
+            tracking_wallets = utils.get_tracking_wallets('ETH_MAINNET')
+            address_list = [key.lower() for key in tracking_wallets.keys()]
+            if json_received['event']['activity'][0]['fromAddress'] in address_list:
+                target = json_received['event']['activity'][0]['fromAddress']
+            else:
+                target = json_received['event']['activity'][0]['toAddress']
+            target = str(target)
+            asyncio.create_task(
+                verify_then_send_notify('ETH_MAINNET', target,
+                                        json_received['event']['activity'][0]['hash'],
+                                        int(json_received['event']['activity'][0]['blockNum'],
+                                            16), tracking_wallets[target]))
+        elif json_received['event']['network'] == 'ETH_GOERLI':
+            txn_hash = json_received['event']['activity'][0]['hash']
+            tracking_wallets = utils.get_tracking_wallets('ETH_GOERLI')
+            address_list = [key.lower() for key in tracking_wallets.keys()]
+            if json_received['event']['activity'][0]['fromAddress'] in address_list:
+                target = json_received['event']['activity'][0]['fromAddress']
+            else:
+                target = json_received['event']['activity'][0]['toAddress']
+            target = str(target)
+            if 'asset' in json_received['event']['activity'][0]:
+                print('adding normal txn')
+                merging_txns.append({txn_hash: 'normal'})
+            elif 'erc721TokenId' in json_received['event']['activity'][0]:
+                print('adding erc721 txn')
+                merging_txns.append({txn_hash: 'erc721'})
+            # time.sleep(5)
+            # asyncio.create_task(
+            #     verify_then_send_notify('ETH_GOERLI', target,
+            #                             txn_hash,
+            #                             int(json_received['event']['activity'][0]['blockNum'],
+            #                                 16), tracking_wallets[target]))
+
+
+def merge_txns():
+    try:
+        while True:
+            addresses = {}
+            for item in merging_txns:
+                for key, value in item.items():
+                    if key in addresses:
+                        addresses[key].append(value)
+                    else:
+                        addresses[key] = [value]
+            addresses = [{key: values} for key, values in addresses.items()]
+            print(addresses)
+            time.sleep(5)
+    except KeyboardInterrupt:
+        print('KeyboardInterrupt received, exiting.')
+
+
+thread = Thread(target=merge_txns)
+thread.start()
 
 
 async def verify_then_send_notify(network, target_address, txn_hash, txn_block_num,
