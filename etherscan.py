@@ -279,13 +279,15 @@ def format_txn(txn, target_address, goerli=False):
     txn['block_number'] = int(txn['blockNumber'])
     txn['block_hash'] = txn['blockHash']
     txn['contract_address'] = txn['contractAddress']
-    txn['status'] = txn['txreceipt_status']
     try:
         txn['eth_value'] = utils.wei_to_eth(int(txn['value']))
     except KeyError:
         txn['eth_value'] = 0.0
-    if txn['methodId'] == '0x':
-        txn['action'] = 'Transfer'
-    else:
-        txn['action'] = txn['functionName'].split('(')[0]
+    try:
+        if txn['methodId'] == '0x':
+            txn['action'] = 'Transfer'
+        else:
+            txn['action'] = txn['functionName'].split('(')[0]
+    except KeyError:
+        pass
     return txn

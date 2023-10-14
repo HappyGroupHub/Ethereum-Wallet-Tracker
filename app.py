@@ -1,6 +1,5 @@
 """This is the main file of the project."""
 import asyncio
-import time
 from threading import Thread
 
 import uvicorn
@@ -30,9 +29,12 @@ app.add_middleware(
 )
 
 config = utils.read_config()
-merging_txns = []
 configuration = Configuration(access_token=config['line_channel_access_token'])
 handler = WebhookHandler(config['line_channel_secret'])
+
+merging_txns = []
+eth_mainnet = 'ETH_MAINNET'
+eth_goerli = 'ETH_GOERLI'
 
 
 @app.post("/callback")
@@ -216,84 +218,155 @@ async def alchemy(request: Request):
     except KeyError:
         pass
     if json_received['type'] == 'ADDRESS_ACTIVITY':
-        if json_received['event']['network'] == 'ETH_MAINNET':
-            tracking_wallets = utils.get_tracking_wallets('ETH_MAINNET')
-            address_list = [key.lower() for key in tracking_wallets.keys()]
-            if json_received['event']['activity'][0]['fromAddress'] in address_list:
-                target = json_received['event']['activity'][0]['fromAddress']
-            else:
-                target = json_received['event']['activity'][0]['toAddress']
-            target = str(target)
-            asyncio.create_task(
-                verify_then_send_notify('ETH_MAINNET', target,
-                                        json_received['event']['activity'][0]['hash'],
-                                        int(json_received['event']['activity'][0]['blockNum'],
-                                            16), tracking_wallets[target]))
-        elif json_received['event']['network'] == 'ETH_GOERLI':
+        if json_received['event']['network'] == eth_mainnet:
             txn_hash = json_received['event']['activity'][0]['hash']
-            tracking_wallets = utils.get_tracking_wallets('ETH_GOERLI')
+            block_num = int(json_received['event']['activity'][0]['blockNum'], 16)
+            tracking_wallets = utils.get_tracking_wallets(eth_goerli)
             address_list = [key.lower() for key in tracking_wallets.keys()]
+
             if json_received['event']['activity'][0]['fromAddress'] in address_list:
-                target = json_received['event']['activity'][0]['fromAddress']
+                target = str(json_received['event']['activity'][0]['fromAddress'])
             else:
-                target = json_received['event']['activity'][0]['toAddress']
-            target = str(target)
+                target = str(json_received['event']['activity'][0]['toAddress'])
+
             if 'asset' in json_received['event']['activity'][0]:
                 print('adding normal txn')
-                merging_txns.append({txn_hash: 'normal'})
+                merging_txns.append(
+                    {'network': eth_goerli, 'txn_hash': txn_hash, 'txn_type': 'normal',
+                     'target': target, 'block_num': block_num,
+                     'line_notify_tokens': tracking_wallets[target]})
             elif 'erc721TokenId' in json_received['event']['activity'][0]:
                 print('adding erc721 txn')
-                merging_txns.append({txn_hash: 'erc721'})
-            # time.sleep(5)
-            # asyncio.create_task(
-            #     verify_then_send_notify('ETH_GOERLI', target,
-            #                             txn_hash,
-            #                             int(json_received['event']['activity'][0]['blockNum'],
-            #                                 16), tracking_wallets[target]))
+                merging_txns.append(
+                    {'network': eth_goerli, 'txn_hash': txn_hash, 'txn_type': 'erc721',
+                     'target': target, 'block_num': block_num,
+                     'line_notify_tokens': tracking_wallets[target]})
+        elif json_received['event']['network'] == eth_goerli:
+            txn_hash = json_received['event']['activity'][0]['hash']
+            block_num = int(json_received['event']['activity'][0]['blockNum'], 16)
+            tracking_wallets = utils.get_tracking_wallets(eth_goerli)
+            address_list = [key.lower() for key in tracking_wallets.keys()]
+
+            if json_received['event']['activity'][0]['fromAddress'] in address_list:
+                target = str(json_received['event']['activity'][0]['fromAddress'])
+            else:
+                target = str(json_received['event']['activity'][0]['toAddress'])
+
+            if 'asset' in json_received['event']['activity'][0]:
+                print('adding normal txn')
+                merging_txns.append(
+                    {'network': eth_goerli, 'txn_hash': txn_hash, 'txn_type': 'normal',
+                     'target': target, 'block_num': block_num,
+                     'line_notify_tokens': tracking_wallets[target]})
+            elif 'erc721TokenId' in json_received['event']['activity'][0]:
+                print('adding erc721 txn')
+                merging_txns.append(
+                    {'network': eth_goerli, 'txn_hash': txn_hash, 'txn_type': 'erc721',
+                     'target': target, 'block_num': block_num,
+                     'line_notify_tokens': tracking_wallets[target]})
 
 
-def merge_txns():
-    try:
+def filter_txns():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    async def _filter_txns():
         while True:
-            addresses = {}
-            for item in merging_txns:
-                for key, value in item.items():
-                    if key in addresses:
-                        addresses[key].append(value)
+            if merging_txns:
+                filtered_txns = []
+                data_dict = {}
+                for txn in merging_txns:
+                    network = txn['network']
+                    block_num = txn['block_num']
+                    target = txn['target']
+                    txn_hash = txn['txn_hash']
+                    txn_type = txn['txn_type']
+                    txn_line_notify_tokens = txn['line_notify_tokens']
+                    if network in data_dict:
+                        if txn_hash in data_dict[network]:
+                            data_dict[network][txn_hash]['txn_type'].append(txn_type)
+                        else:
+                            data_dict[network][txn_hash] = {'network': network,
+                                                            'block_num': block_num,
+                                                            'target': target,
+                                                            'txn_type': [txn_type],
+                                                            'txn_hash': txn_hash,
+                                                            'line_notify_tokens': txn_line_notify_tokens}
                     else:
-                        addresses[key] = [value]
-            addresses = [{key: values} for key, values in addresses.items()]
-            print(addresses)
-            time.sleep(5)
+                        data_dict[network] = {
+                            txn_hash: {'network': network, 'block_num': block_num, 'target': target,
+                                       'txn_type': [txn_type], 'txn_hash': txn_hash,
+                                       'line_notify_tokens': txn_line_notify_tokens}}
+                for network, addresses in data_dict.items():
+                    for txn_hash, txn_data in addresses.items():
+                        filtered_txns.append(txn_data)
+
+                print(filtered_txns)
+                for filtered_txn in filtered_txns:
+                    asyncio.create_task(verify_merge_then_send_notify(filtered_txn))
+                merging_txns.clear()
+                filtered_txns.clear()
+            await asyncio.sleep(5)
+
+    try:
+        asyncio.run(_filter_txns())
     except KeyboardInterrupt:
         print('KeyboardInterrupt received, exiting.')
 
 
-thread = Thread(target=merge_txns)
-thread.start()
-
-
-async def verify_then_send_notify(network, target_address, txn_hash, txn_block_num,
-                                  line_notify_tokens):
+async def verify_merge_then_send_notify(txn):
     while True:
-        time.sleep(10)
-        txns = []
-        if network == 'ETH_MAINNET':
-            txns = eth.get_normal_transactions(target_address, start_block=txn_block_num)
-        elif network == 'ETH_GOERLI':
-            txns = eth.get_normal_transactions(target_address, goerli=True,
-                                               start_block=txn_block_num)
+        await asyncio.sleep(5)
         try:
-            for txn in txns:
-                if txn['hash'] == txn_hash:
-                    txn = eth.format_txn(txn, target_address)
-                    line_notify.send_notify(txn, 'normal', line_notify_tokens)
-                    break
+            normal_txn = {}
+            erc721_txn = {}
+            for txn_type in txn['txn_type']:
+                if txn_type == 'normal':
+                    normal_txns = []
+                    if txn['network'] == eth_mainnet:
+                        normal_txns = eth.get_normal_transactions(txn['target'],
+                                                                  start_block=txn['block_num'])
+                    elif txn['network'] == eth_goerli:
+                        normal_txns = eth.get_normal_transactions(txn['target'],
+                                                                  start_block=txn['block_num'],
+                                                                  goerli=True)
+                    for normal_txn in normal_txns:
+                        if normal_txn['hash'] == txn['txn_hash']:
+                            normal_txn = eth.format_txn(normal_txn, txn['target'])
+                            print(f'Formatted normal txn\n {normal_txn}')
+                            break
+                if txn_type == 'erc721':
+                    erc721_txns = []
+                    if txn['network'] == eth_mainnet:
+                        erc721_txns = eth.get_erc721_token_transfers(txn['target'],
+                                                                     start_block=txn['block_num'])
+                    elif txn['network'] == eth_goerli:
+                        erc721_txns = eth.get_erc721_token_transfers(txn['target'],
+                                                                     start_block=txn['block_num'],
+                                                                     goerli=True)
+                    for erc721_txn in erc721_txns:
+                        if erc721_txn['hash'] == txn['txn_hash']:
+                            erc721_txn = eth.format_txn(erc721_txn, txn['target'])
+                            print(f'Formatted erc721 txn\n {erc721_txn}')
+                            break
+
+            if len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'normal':
+                line_notify.send_notify(normal_txn, 'normal', txn['line_notify_tokens'])
+            elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc721':
+                line_notify.send_notify(erc721_txn, 'erc721', txn['line_notify_tokens'])
+            elif 'normal' in txn['txn_type'] and 'erc721' in txn['txn_type']:
+                new_txn = normal_txn
+                new_txn['token_name'] = erc721_txn['tokenName']
+                new_txn['token_id'] = erc721_txn['tokenID']
+                line_notify.send_notify(new_txn, 'erc721', txn['line_notify_tokens'])
             break
         except TypeError:
+            print('Etherscan not found yet')
             continue
 
 
 if __name__ == '__main__':
     initial_checks.check()
+    thread = Thread(target=filter_txns)
+    thread.start()
     uvicorn.run(app, port=5000)

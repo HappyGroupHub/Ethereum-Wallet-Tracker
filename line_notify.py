@@ -76,7 +76,16 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"------------------------------------\n" \
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"{txn['txn_url']}"
-    elif txn_type == 'internal':
-        pass
+    elif txn_type == 'erc721':
+        message = f"New NFT Transaction Found!\n" \
+                  f"------------------------------------\n" \
+                  f"From: {txn['from']}\n" \
+                  f"To: {txn['to']}\n" \
+                  f"Time: {txn['time']}\n" \
+                  f"Price: {txn['eth_value']} ETH\n" \
+                  f"{txn['token_name']} #{txn['token_id']}\n" \
+                  f"------------------------------------\n" \
+                  f"Current Balance: {txn['wallet_balance']} ETH\n" \
+                  f"{txn['txn_url']}"
     for token in line_notify_tokens:
         send_message(message, token)
