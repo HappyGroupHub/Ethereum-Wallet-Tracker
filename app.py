@@ -266,55 +266,22 @@ async def alchemy(request: Request):
                      'line_notify_tokens': tracking_wallets[target]})
 
 
-def filter_txns():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+async def verify_merge_then_send_notify(txn: dict):
+    """Verify the transaction from etherscan then send notify to users.
 
-    async def _filter_txns():
-        while True:
-            if merging_txns:
-                filtered_txns = []
-                data_dict = {}
-                for txn in merging_txns:
-                    network = txn['network']
-                    block_num = txn['block_num']
-                    target = txn['target']
-                    txn_hash = txn['txn_hash']
-                    txn_type = txn['txn_type']
-                    txn_line_notify_tokens = txn['line_notify_tokens']
-                    if network in data_dict:
-                        if txn_hash in data_dict[network]:
-                            data_dict[network][txn_hash]['txn_type'].append(txn_type)
-                        else:
-                            data_dict[network][txn_hash] = {'network': network,
-                                                            'block_num': block_num,
-                                                            'target': target,
-                                                            'txn_type': [txn_type],
-                                                            'txn_hash': txn_hash,
-                                                            'line_notify_tokens': txn_line_notify_tokens}
-                    else:
-                        data_dict[network] = {
-                            txn_hash: {'network': network, 'block_num': block_num, 'target': target,
-                                       'txn_type': [txn_type], 'txn_hash': txn_hash,
-                                       'line_notify_tokens': txn_line_notify_tokens}}
-                for network, addresses in data_dict.items():
-                    for txn_hash, txn_data in addresses.items():
-                        filtered_txns.append(txn_data)
+    The function will be run in every 5 seconds when get called by filter_txns function.
+    While the transaction is found in etherscan, it will be formatted, merged then sent to users.
 
-                print(filtered_txns)
-                for filtered_txn in filtered_txns:
-                    asyncio.create_task(verify_merge_then_send_notify(filtered_txn))
-                merging_txns.clear()
-                filtered_txns.clear()
-            await asyncio.sleep(5)
+    The input txn should be a filtered transaction, which should be a dictionary with keys:
+    - network: The network of the transaction.
+    - block_num: The block number of the transaction.
+    - target: The target wallet address of the transaction.
+    - txn_hash: The hash of the transaction.
+    - txn_type(list): The types of the transaction.
+    - line_notify_tokens(list): The line notify tokens to send.
 
-    try:
-        asyncio.run(_filter_txns())
-    except KeyboardInterrupt:
-        print('KeyboardInterrupt received, exiting.')
-
-
-async def verify_merge_then_send_notify(txn):
+    :param dict txn: The filtered transaction.
+    """
     while True:
         await asyncio.sleep(5)
         try:
@@ -363,6 +330,69 @@ async def verify_merge_then_send_notify(txn):
         except TypeError:
             print('Etherscan not found yet')
             continue
+
+
+def filter_txns():
+    """Filter transactions' types then send them to verify_merge_then_send_notify function.
+
+    This function will be run in every 5 seconds.
+    By continuously checking the merging_txns list, it combines same hash different types
+    transactions into one.
+
+    The merging_txns should be updated while receiving new transactions from Alchemy Webhook.
+    And the merging_txns should be a list of dictionary with keys:
+    - network: The network of the transaction.
+    - block_num: The block number of the transaction.
+    - target: The target wallet address of the transaction.
+    - txn_hash: The hash of the transaction.
+    - txn_type: The type of the transaction.
+    - line_notify_tokens(list): The line notify tokens to send.
+    """
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    async def _filter_txns():
+        while True:
+            if merging_txns:
+                filtered_txns = []
+                data_dict = {}
+                for txn in merging_txns:
+                    network = txn['network']
+                    block_num = txn['block_num']
+                    target = txn['target']
+                    txn_hash = txn['txn_hash']
+                    txn_type = txn['txn_type']
+                    txn_line_notify_tokens = txn['line_notify_tokens']
+                    if network in data_dict:
+                        if txn_hash in data_dict[network]:
+                            data_dict[network][txn_hash]['txn_type'].append(txn_type)
+                        else:
+                            data_dict[network][txn_hash] = {'network': network,
+                                                            'block_num': block_num,
+                                                            'target': target,
+                                                            'txn_type': [txn_type],
+                                                            'txn_hash': txn_hash,
+                                                            'line_notify_tokens': txn_line_notify_tokens}
+                    else:
+                        data_dict[network] = {
+                            txn_hash: {'network': network, 'block_num': block_num, 'target': target,
+                                       'txn_type': [txn_type], 'txn_hash': txn_hash,
+                                       'line_notify_tokens': txn_line_notify_tokens}}
+                for network, addresses in data_dict.items():
+                    for txn_hash, txn_data in addresses.items():
+                        filtered_txns.append(txn_data)
+
+                print(filtered_txns)
+                for filtered_txn in filtered_txns:
+                    asyncio.create_task(verify_merge_then_send_notify(filtered_txn))
+                merging_txns.clear()
+                filtered_txns.clear()
+            await asyncio.sleep(5)
+
+    try:
+        asyncio.run(_filter_txns())
+    except KeyboardInterrupt:
+        print('KeyboardInterrupt received, exiting.')
 
 
 if __name__ == '__main__':
