@@ -77,11 +77,13 @@ def get_wallet_balance(wallet_address, goerli=False, tag='latest'):
         raise Exception(f"An error occurred while getting wallet balance: {response}")
 
 
-def get_erc20_token_balance(wallet_address, contract_address, goerli=False, tag='latest'):
+def get_erc20_token_balance(wallet_address, contract_address, token_decimal, goerli=False,
+                            tag='latest'):
     """Get ERC20 token balance.
 
     :param str wallet_address: Wallet address
     :param str contract_address: Contract address
+    :param int token_decimal: Token decimal
     :param bool goerli: If True, use goerli testnet, default is False
     :param str tag: Pre-defined block parameter, either earliest, pending or latest, default is latest
     :rtype: dict
@@ -91,9 +93,9 @@ def get_erc20_token_balance(wallet_address, contract_address, goerli=False, tag=
     response = get_json_response(url)
     if response['status'] == '1' and response['message'] == 'OK':
         balance_in_wei = int(response['result'])
-        balance_in_eth = balance_in_wei / 10 ** 18
-        balance = round(balance_in_eth, 4)
-        results = {'balance_in_wei': balance_in_wei, 'balance_in_eth': balance_in_eth,
+        balance_converted = balance_in_wei / 10 ** token_decimal
+        balance = round(balance_converted, 4)
+        results = {'balance_in_wei': balance_in_wei, 'balance_converted': balance_converted,
                    'balance': balance}
         return results
     else:
@@ -256,20 +258,21 @@ def get_json_response(url):
             continue
 
 
-def format_txn(txn, target_address, goerli=False):
+def format_txn(txn, txn_type, target_address, goerli=False):
     """Format transaction
 
     :param dict txn: Transaction
+    :param str txn_type: Transaction type, normal, erc20, erc721 or erc1155
     :param str target_address: Target address
     :param bool goerli: If True, use goerli testnet, default is False
     :rtype: dict
     """
-    if goerli:
-        base_url = 'https://goerli.etherscan.io'
-        txn['wallet_balance'] = get_wallet_balance(target_address, goerli=True)['balance']
-    else:
+    if not goerli:
         base_url = 'https://etherscan.io'
         txn['wallet_balance'] = get_wallet_balance(target_address)['balance']
+    else:
+        base_url = 'https://goerli.etherscan.io'
+        txn['wallet_balance'] = get_wallet_balance(target_address, goerli=True)['balance']
     txn['txn_url'] = f'{base_url}/tx/{txn["hash"]}'
     txn['time'] = datetime.fromtimestamp(int(txn['timeStamp'])).strftime('%Y-%m-%d %H:%M:%S')
     txn['gas_price'] = utils.wei_to_gwei(int(txn['gasPrice']))
@@ -279,15 +282,23 @@ def format_txn(txn, target_address, goerli=False):
     txn['block_number'] = int(txn['blockNumber'])
     txn['block_hash'] = txn['blockHash']
     txn['contract_address'] = txn['contractAddress']
-    try:
+    if txn_type == 'normal':
         txn['eth_value'] = utils.wei_to_eth(int(txn['value']))
-    except KeyError:
-        txn['eth_value'] = 0.0
-    try:
         if txn['methodId'] == '0x':
             txn['action'] = 'Transfer'
         else:
             txn['action'] = txn['functionName'].split('(')[0]
-    except KeyError:
-        pass
+    if txn_type == 'erc721':
+        txn['token_name'] = txn['tokenName']
+        txn['token_id'] = txn['tokenID']
+    if txn_type == 'erc20':
+        txn['token_symbol'] = txn['tokenSymbol']
+        txn['token_decimal'] = int(txn['tokenDecimal'])
+        txn['value'] = int(txn['value']) / 10 ** txn['token_decimal']
+        if not goerli:
+            txn['token_balance'] = get_erc20_token_balance(target_address, txn['contract_address'],
+                                                           txn['token_decimal'])
+        else:
+            txn['token_balance'] = get_erc20_token_balance(target_address, txn['contract_address'],
+                                                           txn['token_decimal'], goerli=True)
     return txn

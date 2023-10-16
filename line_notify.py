@@ -72,7 +72,7 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"Time: {txn['time']}\n" \
                   f"Value: {txn['eth_value']} ETH\n" \
                   f"Action: {txn['action']}\n" \
-                  f"Gas Price: {txn['gas_price']} Gwei ({txn['gas_fee_usd']}) USD\n" \
+                  f"Gas Price: {txn['gas_price']} Gwei\n" \
                   f"------------------------------------\n" \
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"{txn['txn_url']}"
@@ -82,10 +82,24 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"From: {txn['from']}\n" \
                   f"To: {txn['to']}\n" \
                   f"Time: {txn['time']}\n" \
-                  f"Price: {txn['eth_value']} ETH\n" \
+                  f"Gas Price: {txn['gas_price']} Gwei\n" \
+                  f"ETH Spend: {txn['spend_value']}\n" \
+                  f"------------------------------------\n" \
                   f"{txn['token_name']} #{txn['token_id']}\n" \
+                  f"Current Balance: {txn['wallet_balance']} ETH\n" \
+                  f"{txn['txn_url']}"
+    elif txn_type == 'erc20':
+        message = f"New ERC20 Transaction Found!\n" \
+                  f"------------------------------------\n" \
+                  f"From: {txn['from']}\n" \
+                  f"To: {txn['to']}\n" \
+                  f"Time: {txn['time']}\n" \
+                  f"Gas Price: {txn['gas_price']} Gwei\n" \
+                  f"ETH Spend: {txn['spend_value']}\n" \
+                  f"Token Value: {txn['value']} {txn['token_symbol']}\n" \
                   f"------------------------------------\n" \
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
+                  f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \
                   f"{txn['txn_url']}"
     for token in line_notify_tokens:
         send_message(message, token)

@@ -232,11 +232,18 @@ async def alchemy(request: Request):
 
         # Determine the transaction type and add to merging_txns list
         if 'asset' in json_received['event']['activity'][0]:
-            print('adding normal txn')
-            merging_txns.append(
-                {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'normal',
-                 'target': target, 'block_num': block_num,
-                 'line_notify_tokens': tracking_wallets[target]})
+            if json_received['event']['activity'][0]['asset'] == 'ETH':
+                print('adding normal txn')
+                merging_txns.append(
+                    {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'normal',
+                     'target': target, 'block_num': block_num,
+                     'line_notify_tokens': tracking_wallets[target]})
+            else:
+                print('adding erc20 txn')
+                merging_txns.append(
+                    {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc20',
+                     'target': target, 'block_num': block_num,
+                     'line_notify_tokens': tracking_wallets[target]})
         elif 'erc721TokenId' in json_received['event']['activity'][0]:
             print('adding erc721 txn')
             merging_txns.append(
@@ -266,6 +273,7 @@ async def verify_merge_then_send_notify(txn: dict):
         try:
             normal_txn = {}
             erc721_txn = {}
+            erc20_txn = {}
             use_goerli = False
             if txn['network'] == eth_goerli:
                 use_goerli = True
@@ -278,7 +286,7 @@ async def verify_merge_then_send_notify(txn: dict):
                                                               goerli=use_goerli)
                     for normal_txn in normal_txns:
                         if normal_txn['hash'] == txn['txn_hash']:
-                            normal_txn = eth.format_txn(normal_txn, txn['target'],
+                            normal_txn = eth.format_txn(normal_txn, txn_type, txn['target'],
                                                         goerli=use_goerli)
                             print(f'Formatted normal txn\n {normal_txn}')
                             break
@@ -288,21 +296,45 @@ async def verify_merge_then_send_notify(txn: dict):
                                                                  goerli=use_goerli)
                     for erc721_txn in erc721_txns:
                         if erc721_txn['hash'] == txn['txn_hash']:
-                            erc721_txn = eth.format_txn(erc721_txn, txn['target'],
+                            erc721_txn = eth.format_txn(erc721_txn, txn_type, txn['target'],
                                                         goerli=use_goerli)
                             print(f'Formatted erc721 txn\n {erc721_txn}')
+                            break
+                if txn_type == 'erc20':
+                    erc20_txns = eth.get_erc20_token_transfers(txn['target'],
+                                                               start_block=txn['block_num'],
+                                                               goerli=use_goerli)
+                    for erc20_txn in erc20_txns:
+                        if erc20_txn['hash'] == txn['txn_hash']:
+                            erc20_txn = eth.format_txn(erc20_txn, txn_type, txn['target'],
+                                                       goerli=use_goerli)
+                            print(f'Formatted erc20 txn\n {erc20_txn}')
                             break
 
             # Merge the transactions and send notify
             if len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'normal':
                 line_notify.send_notify(normal_txn, 'normal', txn['line_notify_tokens'])
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc721':
+                erc721_txn['spend_value'] = 'Transfer'
                 line_notify.send_notify(erc721_txn, 'erc721', txn['line_notify_tokens'])
+            elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc20':
+                erc20_txn['spend_value'] = 'Transfer'
+                line_notify.send_notify(erc20_txn, 'erc20', txn['line_notify_tokens'])
+            elif 'normal' in txn['txn_type'] and 'erc20' in txn['txn_type']:
+                if normal_txn['value'] == '0':
+                    erc20_txn['spend_value'] = 'Transfer'
+                else:
+                    erc20_txn['spend_value'] = f"{normal_txn['value']} ETH"
+                line_notify.send_notify(erc20_txn, 'erc20', txn['line_notify_tokens'])
             elif 'normal' in txn['txn_type'] and 'erc721' in txn['txn_type']:
                 new_txn = normal_txn
-                new_txn['txn_to'] = erc721_txn['to']
-                new_txn['token_name'] = erc721_txn['tokenName']
-                new_txn['token_id'] = erc721_txn['tokenID']
+                if normal_txn['value'] == '0':
+                    new_txn['spend_value'] = 'Transfer'
+                else:
+                    new_txn['spend_value'] = f"{normal_txn['value']} ETH"
+                new_txn['to'] = erc721_txn['to']
+                new_txn['token_name'] = erc721_txn['token_name']
+                new_txn['token_id'] = erc721_txn['token_id']
                 line_notify.send_notify(new_txn, 'erc721', txn['line_notify_tokens'])
             break
         except TypeError:
