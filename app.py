@@ -339,6 +339,7 @@ async def verify_merge_then_send_notify(txn: dict):
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc721':
                 erc721_txn['spend_value'] = 'Transfer'
                 line_notify.send_notify(erc721_txn, 'erc721', txn['line_notify_tokens'])
+
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type']:
                 if normal_txn['value'] == '0':
@@ -357,6 +358,13 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
                 line_notify.send_notify(new_txn, 'erc721', txn['line_notify_tokens'])
+            elif len(txn['txn_type']) == 2 and 'erc20' in txn['txn_type'] and 'erc721' in txn[
+                'txn_type']:
+                new_txn = erc20_txn
+                new_txn['token_name'] = erc721_txn['token_name']
+                new_txn['token_id'] = erc721_txn['token_id']
+                line_notify.send_notify(new_txn, 'erc20_721', txn['line_notify_tokens'])
+
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type'] and 'erc721' in txn['txn_type']:
                 new_txn = erc721_txn
