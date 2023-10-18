@@ -288,9 +288,6 @@ def format_txn(txn, txn_type, target_address, goerli=False):
             txn['action'] = 'Transfer'
         else:
             txn['action'] = txn['functionName'].split('(')[0]
-    if txn_type == 'erc721':
-        txn['token_name'] = txn['tokenName']
-        txn['token_id'] = txn['tokenID']
     if txn_type == 'erc20':
         txn['token_symbol'] = txn['tokenSymbol']
         txn['token_decimal'] = int(txn['tokenDecimal'])
@@ -301,4 +298,8 @@ def format_txn(txn, txn_type, target_address, goerli=False):
         else:
             txn['token_balance'] = get_erc20_token_balance(target_address, txn['contract_address'],
                                                            txn['token_decimal'], goerli=True)
+    if txn_type == 'erc721':
+        txn['token_name'] = txn['tokenName']
+        txn['token_id'] = txn['tokenID']
+
     return txn
