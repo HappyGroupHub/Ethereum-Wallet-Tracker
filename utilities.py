@@ -13,27 +13,27 @@ def config_file_generator():
     """Generate the template of config file"""
     with open('config.yml', 'w', encoding="utf8") as file:
         file.write("""# ++--------------------------------++
-# | Ethereum Wallet Tracker          |
-# | Made by LD                       |
+# | Ethereum Wallet Tracker  v0.1.0  |
+# | Made by LD & K                   |
 # ++--------------------------------++
 
 # Paste your endpoint for the webhook here.
 # You can use ngrok to get a free static endpoint now!
 # Find out more here: https://ngrok.com/
+# Notes: Make sure the webhook url is started with https:// and ended without a slash (/)
 webhook_url: ''
 
-# Paste your etherscan api key here.
-# You can get the api key from here: https://etherscan.io/myapikey
+# Paste your Etherscan api key and Alchemy Webhook Auth Token here.
+# Etherscan: https://etherscan.io/myapikey
+# Alchemy: https://dashboard.alchemyapi.io/webhooks
 etherscan_api_key: ''
-
-# Alchemy Webhook Auth Token
 alchemy_webhook_auth_token: ''
 
-# Line Bot Tokens
+# Paste yor Line Bot and Line Notify tokens and secrets here.
+# Line bot: https://developers.line.biz/console/
+# Line Notify: https://notify-bot.line.me/my/services/
 line_channel_access_token: ''
 line_channel_secret: ''
-
-# Line notify
 line_notify_id: ''
 line_notify_secret: ''
 """
