@@ -288,6 +288,8 @@ def format_txn(txn, txn_type, target_address, goerli=False):
             txn['action'] = 'Transfer'
         else:
             txn['action'] = txn['functionName'].split('(')[0]
+    if txn_type == 'internal':
+        txn['eth_value'] = utils.wei_to_eth(int(txn['value']))
     if txn_type == 'erc20':
         txn['token_symbol'] = txn['tokenSymbol']
         txn['token_decimal'] = int(txn['tokenDecimal'])

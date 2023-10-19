@@ -332,7 +332,7 @@ async def verify_merge_then_send_notify(txn: dict):
             if len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'normal':
                 line_notify.send_notify(normal_txn, 'normal', txn['line_notify_tokens'])
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'internal':
-                pass
+                line_notify.send_notify(internal_txn, 'internal', txn['line_notify_tokens'])
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc20':
                 erc20_txn['spend_value'] = 'Transfer'
                 line_notify.send_notify(erc20_txn, 'erc20', txn['line_notify_tokens'])
@@ -345,7 +345,7 @@ async def verify_merge_then_send_notify(txn: dict):
                 if normal_txn['value'] == '0':
                     erc20_txn['spend_value'] = 'Transfer'
                 else:
-                    erc20_txn['spend_value'] = f"{normal_txn['value']} ETH"
+                    erc20_txn['spend_value'] = f"{normal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc20_txn, 'erc20', txn['line_notify_tokens'])
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
@@ -353,7 +353,7 @@ async def verify_merge_then_send_notify(txn: dict):
                 if normal_txn['value'] == '0':
                     new_txn['spend_value'] = 'Transfer'
                 else:
-                    new_txn['spend_value'] = f"{normal_txn['value']} ETH"
+                    new_txn['spend_value'] = f"{normal_txn['eth_value']} ETH"
                 new_txn['to'] = erc721_txn['to']
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
@@ -364,6 +364,14 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
                 line_notify.send_notify(new_txn, 'erc20_721', txn['line_notify_tokens'])
+            elif len(txn['txn_type']) == 2 and 'internal' in txn['txn_type'] and 'erc721' in txn[
+                'txn_type']:
+                erc721_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
+                line_notify.send_notify(erc721_txn, 'internal_721', txn['line_notify_tokens'])
+            elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'internal' in txn[
+                'txn_type']:
+                erc20_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
+                line_notify.send_notify(erc20_txn, 'normal_internal', txn['line_notify_tokens'])
 
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type'] and 'erc721' in txn['txn_type']:
@@ -374,7 +382,12 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['token_symbol'] = erc20_txn['token_symbol']
                 new_txn['token_balance'] = erc20_txn['token_balance']
                 line_notify.send_notify(new_txn, 'normal_20_721', txn['line_notify_tokens'])
-                break
+            elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'internal' in txn[
+                'txn_type'] and 'erc20' in txn['txn_type']:
+                erc20_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
+                line_notify.send_notify(erc20_txn, 'normal_internal_20', txn['line_notify_tokens'])
+
+            break
         except TypeError:
             print('Etherscan not found yet')
             continue
