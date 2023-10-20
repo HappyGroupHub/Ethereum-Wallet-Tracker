@@ -8,14 +8,11 @@ from threading import Thread
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from linebot.models import TemplateSendMessage
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, \
-    TextMessage, CarouselTemplate, CarouselColumn, MessageAction, MessagingApiBlob, RichMenuRequest, RichMenuSize, \
-    RichMenuArea, RichMenuBounds, TemplateMessage, ConfirmTemplate
-
-TextMessage, TemplateMessage, ConfirmTemplate, MessageAction
+    MessagingApiBlob, RichMenuRequest, RichMenuSize, RichMenuArea, RichMenuBounds, TextMessage, \
+    TemplateMessage, ConfirmTemplate, MessageAction
 from linebot.v3.webhooks import MessageEvent, TextMessageContent, FollowEvent
 
 import alchemy as al
@@ -508,7 +505,6 @@ def open_rich_menu():
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
         line_bot_blob_api = MessagingApiBlob(api_client)
-
 
         rich_menu = RichMenuRequest(
             size=RichMenuSize(width=2500, height=843),
