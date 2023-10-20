@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, \
-    TextMessage
+    TextMessage, TemplateMessage, ConfirmTemplate, MessageAction
 from linebot.v3.webhooks import MessageEvent, TextMessageContent, FollowEvent
 
 import alchemy as al
@@ -83,6 +83,27 @@ def handle_message(event):
         user_id = event.source.user_id
         message_received = event.message.text
         reply_token = event.reply_token
+        if message_received == 'test':
+            template_message = TemplateMessage(
+                alt_text="已在其他裝置上完成LINE綁定，是否重新綁定?",
+                template=ConfirmTemplate(
+                    text="是否確定重新綁定並轉移帳號?\n------------注意------------\n確認後將斷開和舊裝置的連接",
+                    actions=[
+                        MessageAction(
+                            label="確定",
+                            text="確定"
+                        ),
+                        MessageAction(
+                            label="取消",
+                            text="取消"
+                        )
+                    ]
+                )
+            )
+            line_bot_api.reply_message_with_http_info(ReplyMessageRequest(
+                reply_token=reply_token,
+                messages=[template_message]
+            ))
         if message_received == '/connect':
             if not utils.get_notify_token_by_user_id(user_id):
                 auth_link = line_notify.create_auth_link(user_id)
