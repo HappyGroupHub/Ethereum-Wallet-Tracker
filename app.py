@@ -8,10 +8,14 @@ from threading import Thread
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from linebot.models import TemplateSendMessage
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, \
-    TextMessage, TemplateMessage, ConfirmTemplate, MessageAction
+    TextMessage, CarouselTemplate, CarouselColumn, MessageAction, MessagingApiBlob, RichMenuRequest, RichMenuSize, \
+    RichMenuArea, RichMenuBounds, TemplateMessage, ConfirmTemplate
+
+TextMessage, TemplateMessage, ConfirmTemplate, MessageAction
 from linebot.v3.webhooks import MessageEvent, TextMessageContent, FollowEvent
 
 import alchemy as al
@@ -498,6 +502,45 @@ def filter_txns():
         asyncio.run(_filter_txns())
     except KeyboardInterrupt:
         logging.error('KeyboardInterrupt received, exiting.')
+
+
+def open_rich_menu():
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        line_bot_blob_api = MessagingApiBlob(api_client)
+
+
+        rich_menu = RichMenuRequest(
+            size=RichMenuSize(width=2500, height=843),
+            selected=False,
+            name="my-rich-menu",
+            chat_bar_text="Tap to open",
+            areas=[
+                RichMenuArea(
+                    bounds=RichMenuBounds(x=0, y=0, width=1250, height=843),
+                    action=MessageAction(label="Account Management", text="/account_management")
+                ),
+                RichMenuArea(
+                    bounds=RichMenuBounds(x=1251, y=0, width=1250, height=843),
+                    action=MessageAction(label="Wallet Management", text="/wallet_management")
+                ),
+            ]
+        )
+
+        rich_menu_id = line_bot_api.create_rich_menu(rich_menu_request=rich_menu).rich_menu_id
+
+        # 2. Upload an image to the Rich Menu
+        with open('./images/rich_menu.png', 'rb') as image:
+            line_bot_blob_api.set_rich_menu_image(
+                rich_menu_id=rich_menu_id,
+                body=bytearray(image.read()),
+                _headers={'Content-Type': 'image/png'}
+            )
+
+        # 3. Set the Rich Menu as the default for users
+        line_bot_api.set_default_rich_menu(rich_menu_id=rich_menu_id)
+
+        print('Rich Menu created successfully.')
 
 
 if __name__ == '__main__':
