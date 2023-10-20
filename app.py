@@ -5,14 +5,12 @@ from threading import Thread
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from linebot.models import TemplateSendMessage
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, \
-    TextMessage, CarouselTemplate, CarouselColumn, MessageAction, MessagingApiBlob, RichMenuRequest, RichMenuSize, \
-    RichMenuArea, RichMenuBounds, TemplateMessage, ConfirmTemplate
+    TextMessage, CarouselTemplate, MessageAction, MessagingApiBlob, RichMenuRequest, RichMenuSize, \
+    RichMenuArea, RichMenuBounds, TemplateMessage
 
-TextMessage, TemplateMessage, ConfirmTemplate, MessageAction
 from linebot.v3.webhooks import MessageEvent, TextMessageContent, FollowEvent
 
 import alchemy as al
@@ -87,20 +85,44 @@ def handle_message(event):
         user_id = event.source.user_id
         message_received = event.message.text
         reply_token = event.reply_token
-        if message_received == 'test':
+        if message_received == '/wallet_management':
             template_message = TemplateMessage(
-                alt_text="已在其他裝置上完成LINE綁定，是否重新綁定?",
-                template=ConfirmTemplate(
-                    text="是否確定重新綁定並轉移帳號?\n------------注意------------\n確認後將斷開和舊裝置的連接",
-                    actions=[
-                        MessageAction(
-                            label="確定",
-                            text="確定"
-                        ),
-                        MessageAction(
-                            label="取消",
-                            text="取消"
-                        )
+                alt_text="Wallet Management",
+                template=CarouselTemplate(
+                    columns=[
+                        {
+                            "thumbnail_image_url": "https://cdn.discordapp.com/attachments/930796258258464829/1163457513342124032/1.jpg?ex=653fa53f&is=652d303f&hm=b046b8a0244adf0ca1921eac9e0924907ba46b0754a70ebac39817c815a484b0&",
+                            "title": "Add Wallet",
+                            "text": "Adding wallet to your tracking list.",
+                            "actions": [
+                                MessageAction(
+                                    label="Add Wallet",
+                                    text="/add"
+                                )
+                            ]
+                        },
+                        {
+                            "thumbnail_image_url": "https://cdn.discordapp.com/attachments/930796258258464829/1163457513048514592/2.jpg?ex=653fa53f&is=652d303f&hm=5b898dfb630a7fd41d1fb822e1df4bd780a0f95f9a1c48bb616632527b76d5c2&",
+                            "title": "Remove Wallet",
+                            "text": "Removing wallet to your tracking list.",
+                            "actions": [
+                                MessageAction(
+                                    label="Remove Wallet",
+                                    text="/remove"
+                                )
+                            ]
+                        },
+                        {
+                            "thumbnail_image_url": "https://cdn.discordapp.com/attachments/930796258258464829/1164757174828945460/TemplateSendMessage.png?ex=65445fa6&is=6531eaa6&hm=10eb59d0a3acb118eaa3e6fb8e9223e8fdb97b82e1a504dac9aefae09f0e0efa&",
+                            "title": "Get Wallet List",
+                            "text": "Getting your wallet tracking list.",
+                            "actions": [
+                                MessageAction(
+                                    label="Get Wallet List ",
+                                    text="/list"
+                                )
+                            ]
+                        }
                     ]
                 )
             )
@@ -108,7 +130,7 @@ def handle_message(event):
                 reply_token=reply_token,
                 messages=[template_message]
             ))
-        if message_received == '/connect':
+        if message_received == '/account_management':
             if not utils.get_notify_token_by_user_id(user_id):
                 auth_link = line_notify.create_auth_link(user_id)
                 reply_message = auth_link
@@ -486,7 +508,6 @@ def open_rich_menu():
         line_bot_api = MessagingApi(api_client)
         line_bot_blob_api = MessagingApiBlob(api_client)
 
-
         rich_menu = RichMenuRequest(
             size=RichMenuSize(width=2500, height=843),
             selected=False,
@@ -521,6 +542,7 @@ def open_rich_menu():
 
 
 if __name__ == '__main__':
+    open_rich_menu()
     initial_checks.check()
     thread = Thread(target=filter_txns)
     thread.start()
