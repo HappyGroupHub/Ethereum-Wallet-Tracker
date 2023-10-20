@@ -1,6 +1,6 @@
-PyYAML~=6.0
+PyYAML==6.0.1
 requests==2.31.0
-line-bot-sdk==3.4.0
-fastapi~=0.103.2
+line-bot-sdk==3.5.0
+fastapi==0.104.0
 uvicorn~=0.23.2
 python-multipart~=0.0.6
