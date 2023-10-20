@@ -1,5 +1,8 @@
 """This is the main file of the project."""
 import asyncio
+import logging
+import os
+import time
 from threading import Thread
 
 import uvicorn
@@ -16,6 +19,13 @@ import etherscan as eth
 import initial_checks
 import line_notify
 import utilities as utils
+
+os.makedirs('logs', exist_ok=True)
+log_filename = time.strftime("./logs/%Y%m%d_%H%M%S.log")
+logging.basicConfig(filename=f'{log_filename}', encoding='utf-8', filemode='w',
+                    format='[%(levelname)s] - %(asctime)s - %(message)s',
+                    datefmt='%d-%b-%Y %H:%M:%S',
+                    level=logging.DEBUG, force=True)
 
 app = FastAPI()
 origins = ["*"]
@@ -51,7 +61,7 @@ async def callback(request: Request):
     try:
         handler.handle(body.decode("utf-8"), signature)
     except InvalidSignatureError:
-        print("Invalid signature. Please check your channel access token/channel secret.")
+        logging.warning("Invalid signature. Please check your channel access token/channel secret.")
         raise HTTPException(status_code=400, detail="Invalid signature.")
 
     return 'OK'
@@ -232,10 +242,10 @@ def handle_follow(event):
 @app.post('/alchemy')
 async def alchemy(request: Request):
     json_received = await request.json()
-    print(json_received)
+    logging.debug(f'Alchemy - {json_received}')
     try:
         if json_received['event']['eventDetails'] == '<EVENT_DETAILS>':
-            print('You received a test notification!')
+            logging.debug('You received a test notification!')
     except KeyError:
         pass
     if json_received['type'] == 'ADDRESS_ACTIVITY':
@@ -254,25 +264,25 @@ async def alchemy(request: Request):
         # Determine the transaction type and add to merging_txns list
         if 'asset' in json_received['event']['activity'][0]:
             if json_received['event']['activity'][0]['category'] == 'internal':  # internal txn
-                print('adding internal txn')
+                logging.debug('adding internal txn')
                 merging_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'internal',
                      'target': target, 'block_num': block_num,
                      'line_notify_tokens': tracking_wallets[target]})
             elif json_received['event']['activity'][0]['asset'] == 'ETH':  # normal txn
-                print('adding normal txn')
+                logging.debug('adding normal txn')
                 merging_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'normal',
                      'target': target, 'block_num': block_num,
                      'line_notify_tokens': tracking_wallets[target]})
             else:  # erc20 txn
-                print('adding erc20 txn')
+                logging.debug('adding erc20 txn')
                 merging_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc20',
                      'target': target, 'block_num': block_num,
                      'line_notify_tokens': tracking_wallets[target]})
         elif 'erc721TokenId' in json_received['event']['activity'][0]:  # erc721 txn
-            print('adding erc721 txn')
+            logging.debug('adding erc721 txn')
             merging_txns.append(
                 {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc721',
                  'target': target, 'block_num': block_num,
@@ -316,7 +326,7 @@ async def verify_merge_then_send_notify(txn: dict):
                         if normal_txn['hash'] == txn['txn_hash']:
                             normal_txn = eth.format_txn(normal_txn, txn_type, txn['target'],
                                                         goerli=use_goerli)
-                            print(f'Formatted normal txn\n {normal_txn}')
+                            logging.debug(f'Formatted normal txn - {normal_txn}')
                             break
                 if txn_type == 'internal':
                     internal_txns = eth.get_internal_transactions(txn['target'],
@@ -326,7 +336,7 @@ async def verify_merge_then_send_notify(txn: dict):
                         if internal_txn['hash'] == txn['txn_hash']:
                             internal_txn = eth.format_txn(internal_txn, txn_type, txn['target'],
                                                           goerli=use_goerli)
-                            print(f'Formatted internal txn\n {internal_txn}')
+                            logging.debug(f'Formatted internal txn - {internal_txn}')
                             break
                 if txn_type == 'erc20':
                     erc20_txns = eth.get_erc20_token_transfers(txn['target'],
@@ -336,7 +346,7 @@ async def verify_merge_then_send_notify(txn: dict):
                         if erc20_txn['hash'] == txn['txn_hash']:
                             erc20_txn = eth.format_txn(erc20_txn, txn_type, txn['target'],
                                                        goerli=use_goerli)
-                            print(f'Formatted erc20 txn\n {erc20_txn}')
+                            logging.debug(f'Formatted erc20 txn - {erc20_txn}')
                             break
                 if txn_type == 'erc721':
                     erc721_txns = eth.get_erc721_token_transfers(txn['target'],
@@ -346,20 +356,24 @@ async def verify_merge_then_send_notify(txn: dict):
                         if erc721_txn['hash'] == txn['txn_hash']:
                             erc721_txn = eth.format_txn(erc721_txn, txn_type, txn['target'],
                                                         goerli=use_goerli)
-                            print(f'Formatted erc721 txn\n {erc721_txn}')
+                            logging.debug(f'Formatted erc721 txn - {erc721_txn}')
                             break
 
             # Merge the transactions and send notify
             if len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'normal':
                 line_notify.send_notify(normal_txn, 'normal', txn['line_notify_tokens'])
+                logging.info('Sent normal txn notify')
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'internal':
                 line_notify.send_notify(internal_txn, 'internal', txn['line_notify_tokens'])
+                logging.info('Sent internal txn notify')
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc20':
                 erc20_txn['spend_value'] = 'Transfer'
                 line_notify.send_notify(erc20_txn, 'erc20', txn['line_notify_tokens'])
+                logging.info('Sent erc20 txn notify')
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc721':
                 erc721_txn['spend_value'] = 'Transfer'
                 line_notify.send_notify(erc721_txn, 'erc721', txn['line_notify_tokens'])
+                logging.info('Sent erc721 txn notify')
 
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type']:
@@ -368,6 +382,7 @@ async def verify_merge_then_send_notify(txn: dict):
                 else:
                     erc20_txn['spend_value'] = f"{normal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc20_txn, 'erc20', txn['line_notify_tokens'])
+                logging.info('Sent normal/erc20 txn notify')
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 new_txn = normal_txn
@@ -379,20 +394,24 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
                 line_notify.send_notify(new_txn, 'erc721', txn['line_notify_tokens'])
+                logging.info('Sent normal/erc721 txn notify')
             elif len(txn['txn_type']) == 2 and 'erc20' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 new_txn = erc20_txn
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
                 line_notify.send_notify(new_txn, 'erc20_721', txn['line_notify_tokens'])
+                logging.info('Sent erc20/erc721 txn notify')
             elif len(txn['txn_type']) == 2 and 'internal' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 erc721_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc721_txn, 'internal_721', txn['line_notify_tokens'])
+                logging.info('Sent internal/erc721 txn notify')
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'internal' in txn[
                 'txn_type']:
                 erc20_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc20_txn, 'normal_internal', txn['line_notify_tokens'])
+                logging.info('Sent normal/internal txn notify')
 
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type'] and 'erc721' in txn['txn_type']:
@@ -403,15 +422,19 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['token_symbol'] = erc20_txn['token_symbol']
                 new_txn['token_balance'] = erc20_txn['token_balance']
                 line_notify.send_notify(new_txn, 'normal_20_721', txn['line_notify_tokens'])
+                logging.info('Sent normal/erc20/erc721 txn notify')
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'internal' in txn[
                 'txn_type'] and 'erc20' in txn['txn_type']:
                 erc20_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc20_txn, 'normal_internal_20', txn['line_notify_tokens'])
+                logging.info('Sent normal/internal/erc20 txn notify')
 
             break
         except TypeError:
-            print('Etherscan not found yet')
             continue
+        except Exception as e:
+            logging.error(f'Error occurred while merging txn: {e}')
+            break
 
 
 def filter_txns():
@@ -464,7 +487,7 @@ def filter_txns():
                     for txn_hash, txn_data in addresses.items():
                         filtered_txns.append(txn_data)
 
-                print(filtered_txns)
+                logging.debug(f'Filtered - {filtered_txns}')
                 for filtered_txn in filtered_txns:
                     asyncio.create_task(verify_merge_then_send_notify(filtered_txn))
                 merging_txns.clear()
@@ -474,7 +497,7 @@ def filter_txns():
     try:
         asyncio.run(_filter_txns())
     except KeyboardInterrupt:
-        print('KeyboardInterrupt received, exiting.')
+        logging.error('KeyboardInterrupt received, exiting.')
 
 
 if __name__ == '__main__':
