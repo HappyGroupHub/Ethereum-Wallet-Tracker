@@ -12,7 +12,7 @@ from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, ReplyMessageRequest, \
     MessagingApiBlob, RichMenuRequest, RichMenuSize, RichMenuArea, RichMenuBounds, TextMessage, \
-    TemplateMessage, ConfirmTemplate, MessageAction, CarouselTemplate, PostbackAction
+    TemplateMessage, MessageAction, CarouselTemplate
 from linebot.v3.webhooks import MessageEvent, TextMessageContent, FollowEvent
 
 import alchemy as al
@@ -42,6 +42,7 @@ app.add_middleware(
 config = utils.read_config()
 configuration = Configuration(access_token=config['line_channel_access_token'])
 handler = WebhookHandler(config['line_channel_secret'])
+
 operation_type = None
 merging_txns = []
 eth_mainnet = 'ETH_MAINNET'
@@ -95,7 +96,7 @@ def handle_message(event):
         user_id = event.source.user_id
         message_received = event.message.text
         reply_token = event.reply_token
-        if message_received.startswith('0x'):
+        if message_received.startswith('0x') and len(message_received) == 42:
 
             notify_token = utils.get_notify_token_by_user_id(user_id)
             parts = message_received.split()
@@ -409,18 +410,18 @@ async def verify_merge_then_send_notify(txn: dict):
             # Merge the transactions and send notify
             if len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'normal':
                 line_notify.send_notify(normal_txn, 'normal', txn['line_notify_tokens'])
-                logging.info('Sent normal txn notify')
+                logging.info(f'Sent normal txn notify - {txn["hash"]}')
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'internal':
                 line_notify.send_notify(internal_txn, 'internal', txn['line_notify_tokens'])
-                logging.info('Sent internal txn notify')
+                logging.info(f'Sent internal txn notify - {txn["hash"]}')
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc20':
                 erc20_txn['spend_value'] = 'Transfer'
                 line_notify.send_notify(erc20_txn, 'erc20', txn['line_notify_tokens'])
-                logging.info('Sent erc20 txn notify')
+                logging.info(f'Sent erc20 txn notify - {txn["hash"]}')
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc721':
                 erc721_txn['spend_value'] = 'Transfer'
                 line_notify.send_notify(erc721_txn, 'erc721', txn['line_notify_tokens'])
-                logging.info('Sent erc721 txn notify')
+                logging.info(f'Sent erc721 txn notify - {txn["hash"]}')
 
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type']:
@@ -429,7 +430,7 @@ async def verify_merge_then_send_notify(txn: dict):
                 else:
                     erc20_txn['spend_value'] = f"{normal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc20_txn, 'erc20', txn['line_notify_tokens'])
-                logging.info('Sent normal/erc20 txn notify')
+                logging.info(f'Sent normal/erc20 txn notify - {txn["hash"]}')
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 new_txn = normal_txn
@@ -441,24 +442,24 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
                 line_notify.send_notify(new_txn, 'erc721', txn['line_notify_tokens'])
-                logging.info('Sent normal/erc721 txn notify')
+                logging.info(f'Sent normal/erc721 txn notify - {txn["hash"]}')
             elif len(txn['txn_type']) == 2 and 'erc20' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 new_txn = erc20_txn
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
                 line_notify.send_notify(new_txn, 'erc20_721', txn['line_notify_tokens'])
-                logging.info('Sent erc20/erc721 txn notify')
+                logging.info(f'Sent erc20/erc721 txn notify - {txn["hash"]}')
             elif len(txn['txn_type']) == 2 and 'internal' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 erc721_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc721_txn, 'internal_721', txn['line_notify_tokens'])
-                logging.info('Sent internal/erc721 txn notify')
+                logging.info(f'Sent internal/erc721 txn notify - {txn["hash"]}')
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'internal' in txn[
                 'txn_type']:
                 erc20_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc20_txn, 'normal_internal', txn['line_notify_tokens'])
-                logging.info('Sent normal/internal txn notify')
+                logging.info(f'Sent normal/internal txn notify - {txn["hash"]}')
 
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type'] and 'erc721' in txn['txn_type']:
@@ -469,12 +470,12 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['token_symbol'] = erc20_txn['token_symbol']
                 new_txn['token_balance'] = erc20_txn['token_balance']
                 line_notify.send_notify(new_txn, 'normal_20_721', txn['line_notify_tokens'])
-                logging.info('Sent normal/erc20/erc721 txn notify')
+                logging.info(f'Sent normal/erc20/erc721 txn notify - {txn["hash"]}')
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'internal' in txn[
                 'txn_type'] and 'erc20' in txn['txn_type']:
                 erc20_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc20_txn, 'normal_internal_20', txn['line_notify_tokens'])
-                logging.info('Sent normal/internal/erc20 txn notify')
+                logging.info(f'Sent normal/internal/erc20 txn notify - {txn["hash"]}')
 
             break
         except TypeError:
@@ -581,13 +582,12 @@ def open_rich_menu():
 
         # 3. Set the Rich Menu as the default for users
         line_bot_api.set_default_rich_menu(rich_menu_id=rich_menu_id)
-
-        print('Rich Menu created successfully.')
+        logging.info('Rich menu created and set successfully.')
 
 
 if __name__ == '__main__':
-    open_rich_menu()
     initial_checks.check()
     thread = Thread(target=filter_txns)
     thread.start()
+    open_rich_menu()
     uvicorn.run(app, port=5000)
