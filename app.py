@@ -209,18 +209,18 @@ def handle_message(event):
                     columns=[
                         {
                             "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_line_notify.png?raw=true",
-                            "title": "Connect To Line Notify",
+                            "title": "Line Notify",
                             "text": "Connecting to Line Notify.",
                             "actions": [
                                 MessageAction(
-                                    label="Connect to Line Notify",
+                                    label="Connect Line Notify",
                                     text="/connect_to_line_notify"
                                 )
                             ]
                         },
                         {
                             "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_discord.png?raw=true",
-                            "title": "Connect To Discord",
+                            "title": "Discord Bot",
                             "text": "Connecting to Discord.",
                             "actions": [
                                 MessageAction(
