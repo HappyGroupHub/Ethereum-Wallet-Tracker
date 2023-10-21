@@ -207,12 +207,54 @@ def handle_message(event):
                     reply_token=reply_token,
                     messages=[template_message]
                 ))
-            if message_received == '/connect':
+            if message_received == '/account_management':
+                template_message = TemplateMessage(
+                    alt_text="Account Management",
+                    template=CarouselTemplate(
+                        columns=[
+                            {
+                                "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_line_notify.png?raw=true",
+                                "title": "Connect To Line Notify",
+                                "text": "Connecting to Line Notify.",
+                                "actions": [
+                                    MessageAction(
+                                        label="Connect to Line Notify",
+                                        text="/connect_to_line_notify"
+                                    )
+                                ]
+                            },
+                            {
+                                "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_discord.png?raw=true",
+                                "title": "Connect To Discord",
+                                "text": "Connecting to Discord.",
+                                "actions": [
+                                    MessageAction(
+                                        label="Connect to Discord",
+                                        text="/connect_to_discord"
+                                    )
+                                ]
+                            }
+                        ]
+                    )
+                )
+                line_bot_api.reply_message_with_http_info(ReplyMessageRequest(
+                    reply_token=reply_token,
+                    messages=[template_message]
+                ))
+            if message_received == '/connect_to_line_notify':
                 if not utils.get_notify_token_by_user_id(user_id):
                     auth_link = line_notify.create_auth_link(user_id)
                     reply_message = auth_link
                 else:
                     reply_message = f"You have already connected your Line Notify!"
+                line_bot_api.reply_message_with_http_info(
+                    ReplyMessageRequest(
+                        reply_token=reply_token,
+                        messages=[TextMessage(text=reply_message)]
+                    )
+                )
+            if message_received == '/connect_to_discord':
+                reply_message = f"Coming soon!"
                 line_bot_api.reply_message_with_http_info(
                     ReplyMessageRequest(
                         reply_token=reply_token,
