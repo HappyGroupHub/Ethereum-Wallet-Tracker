@@ -43,7 +43,7 @@ config = utils.read_config()
 configuration = Configuration(access_token=config['line_channel_access_token'])
 handler = WebhookHandler(config['line_channel_secret'])
 
-operation_type = None
+operation_type = {}
 merging_txns = []
 eth_mainnet = 'ETH_MAINNET'
 eth_goerli = 'ETH_GOERLI'
@@ -107,7 +107,6 @@ def handle_message(event):
                     wallet_address = parts[-2].lower()
                 else:
                     wallet_address = parts[-1].lower()
-
                 network = 'ETH_MAINNET' if not is_test_network else 'ETH_GOERLI'
 
                 tracking_wallets = utils.get_tracking_wallets(network)
@@ -169,7 +168,7 @@ def handle_message(event):
                     template=CarouselTemplate(
                         columns=[
                             {
-                                "thumbnail_image_url": "https://cdn.discordapp.com/attachments/930796258258464829/1163457513342124032/1.jpg?ex=653fa53f&is=652d303f&hm=b046b8a0244adf0ca1921eac9e0924907ba46b0754a70ebac39817c815a484b0&",
+                                "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/add_wallet.png?raw=true",
                                 "title": "Add Wallet",
                                 "text": "Adding wallet to your tracking list.",
                                 "actions": [
@@ -180,7 +179,7 @@ def handle_message(event):
                                 ]
                             },
                             {
-                                "thumbnail_image_url": "https://cdn.discordapp.com/attachments/930796258258464829/1163457513048514592/2.jpg?ex=653fa53f&is=652d303f&hm=5b898dfb630a7fd41d1fb822e1df4bd780a0f95f9a1c48bb616632527b76d5c2&",
+                                "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/remove_wallet.png?raw=true",
                                 "title": "Remove Wallet",
                                 "text": "Removing wallet to your tracking list.",
                                 "actions": [
@@ -191,7 +190,7 @@ def handle_message(event):
                                 ]
                             },
                             {
-                                "thumbnail_image_url": "https://cdn.discordapp.com/attachments/930796258258464829/1164757174828945460/TemplateSendMessage.png?ex=65445fa6&is=6531eaa6&hm=10eb59d0a3acb118eaa3e6fb8e9223e8fdb97b82e1a504dac9aefae09f0e0efa&",
+                                "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/get_wallet_list.png?raw=true",
                                 "title": "Get Wallet List",
                                 "text": "Getting your wallet tracking list.",
                                 "actions": [
@@ -226,7 +225,7 @@ def handle_message(event):
                     reply_message = f"Please connect your Line Notify first!\n" \
                                     f"Use /connect to connect it."
                 else:
-                    reply_message = f"Please enter the wallet address you want to track.\n"
+                    reply_message = f"Please enter the wallet address you want to track."
                     operation_type = 'add'
                 line_bot_api.reply_message_with_http_info(
                     ReplyMessageRequest(
@@ -240,7 +239,7 @@ def handle_message(event):
                     reply_message = f"Please connect your Line Notify first!\n" \
                                     f"Use /connect to connect it."
                 else:
-                    reply_message = f"Please enter the wallet address you want to remove.\n"
+                    reply_message = f"Please enter the wallet address you want to remove."
                     operation_type = 'remove'
                 line_bot_api.reply_message_with_http_info(
                     ReplyMessageRequest(
@@ -256,7 +255,7 @@ def handle_message(event):
                 user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
                 if not user_tracked_wallets:
                     reply_message = f"You have not added any tracking address yet!\n" \
-                                    f"Use /add <wallet_address> to add one."
+                                    f"Press Add Wallet to add one."
                 else:
                     reply_message = f"Tracking Wallets in {network}:\n"
                     for wallet in user_tracked_wallets:
