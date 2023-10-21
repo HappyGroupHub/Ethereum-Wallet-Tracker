@@ -42,7 +42,6 @@ app.add_middleware(
 config = utils.read_config()
 configuration = Configuration(access_token=config['line_channel_access_token'])
 handler = WebhookHandler(config['line_channel_secret'])
-
 operation_type = {}
 merging_txns = []
 eth_mainnet = 'ETH_MAINNET'
@@ -96,218 +95,224 @@ def handle_message(event):
         user_id = event.source.user_id
         message_received = event.message.text
         reply_token = event.reply_token
-        if message_received.startswith('0x') and len(message_received) == 42:
+        if user_id in operation_type:
+            print(operation_type[user_id])
+            if message_received.startswith('0x') and len(message_received) == 42:
+                notify_token = utils.get_notify_token_by_user_id(user_id)
+                parts = message_received.split()
+                is_test_network = False
+                if operation_type[user_id] == 'add':
+                    if len(parts) >= 2 and parts[-1] == 'test':
+                        is_test_network = True
+                        wallet_address = parts[-2].lower()
+                    else:
+                        wallet_address = parts[-1].lower()
+                    network = 'ETH_MAINNET' if not is_test_network else 'ETH_GOERLI'
 
-            notify_token = utils.get_notify_token_by_user_id(user_id)
-            parts = message_received.split()
-            is_test_network = False
-            if operation_type == 'add':
-                if len(parts) >= 2 and parts[-1] == 'test':
-                    is_test_network = True
-                    wallet_address = parts[-2].lower()
-                else:
-                    wallet_address = parts[-1].lower()
-                network = 'ETH_MAINNET' if not is_test_network else 'ETH_GOERLI'
+                    tracking_wallets = utils.get_tracking_wallets(network)
+                    user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
 
-                tracking_wallets = utils.get_tracking_wallets(network)
-                user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
+                    if wallet_address in user_tracked_wallets:
+                        reply_message = f"Wallet address has already been added before!\n" \
+                                        f"Press Get Wallet List Button to see all tracking addresses."
+                        del operation_type[user_id]
+                    else:
+                        if wallet_address not in tracking_wallets:
+                            al.add_tracking_address(tracking_wallets['webhook_id'], wallet_address)
+                        utils.add_tracking_wallet(network, wallet_address, notify_token)
+                        utils.add_tracking_address_by_user_id(user_id, network, wallet_address)
+                        reply_message = f"Successfully added new tracking address!\n" \
+                                        f"Network: {network}\n" \
+                                        f"Wallet Address: {wallet_address}"
+                        line_notify.send_message(reply_message, notify_token)
+                        reply_message = f"Successfully added new tracking address!"
+                        del operation_type[user_id]
+                elif operation_type == 'remove':
+                    if len(parts) >= 1 and parts[-1] == 'test':
+                        is_test_network = True
+                        wallet_address = parts[-2].lower()
+                    else:
+                        wallet_address = parts[-1].lower()
 
-                if wallet_address in user_tracked_wallets:
-                    reply_message = f"Wallet address has already been added before!\n" \
-                                    f"Press Get Wallet List Button to see all tracking addresses."
-                else:
-                    if wallet_address not in tracking_wallets:
-                        al.add_tracking_address(tracking_wallets['webhook_id'], wallet_address)
-                    utils.add_tracking_wallet(network, wallet_address, notify_token)
-                    utils.add_tracking_address_by_user_id(user_id, network, wallet_address)
-                    reply_message = f"Successfully added new tracking address!\n" \
-                                    f"Network: {network}\n" \
-                                    f"Wallet Address: {wallet_address}"
-                    line_notify.send_message(reply_message, notify_token)
-                    reply_message = f"Successfully added new tracking address!"
-            elif operation_type == 'remove':
+                    network = 'ETH_MAINNET' if not is_test_network else 'ETH_GOERLI'
 
-                if len(parts) >= 2 and parts[-1] == 'test':
-                    is_test_network = True
-                    wallet_address = parts[-2].lower()
-                else:
-                    wallet_address = parts[-1].lower()
+                    tracking_wallets = utils.get_tracking_wallets(network)
+                    user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
 
-                network = 'ETH_MAINNET' if not is_test_network else 'ETH_GOERLI'
+                    if wallet_address not in user_tracked_wallets:
+                        reply_message = f"Wallet address not found in tracking list!\n" \
+                                        f"Press Get Wallet List Button to see all tracking addresses."
+                        del operation_type[user_id]
+                    else:
+                        if wallet_address in tracking_wallets:
+                            al.remove_tracking_address(tracking_wallets['webhook_id'], wallet_address)
+                        utils.remove_tracking_wallet(network, wallet_address, notify_token)
+                        utils.remove_tracking_address_by_user_id(user_id, network, wallet_address)
+                        reply_message = f"Successfully removed the tracking address!\n" \
+                                        f"Network: {network}\n" \
+                                        f"Wallet Address: {wallet_address}"
+                        line_notify.send_message(reply_message, notify_token)
+                        reply_message = f"Successfully removed the tracking address!"
+                        del operation_type[user_id]
 
-                tracking_wallets = utils.get_tracking_wallets(network)
-                user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
-
-                if wallet_address not in user_tracked_wallets:
-                    reply_message = f"Wallet address not found in tracking list!\n" \
-                                    f"Press Get Wallet List Button to see all tracking addresses."
-                else:
-                    if wallet_address in tracking_wallets:
-                        al.remove_tracking_address(tracking_wallets['webhook_id'], wallet_address)
-                    utils.remove_tracking_wallet(network, wallet_address, notify_token)
-                    utils.remove_tracking_address_by_user_id(user_id, network, wallet_address)
-                    reply_message = f"Successfully removed the tracking address!\n" \
-                                    f"Network: {network}\n" \
-                                    f"Wallet Address: {wallet_address}"
-                    line_notify.send_message(reply_message, notify_token)
-                    reply_message = f"Successfully removed the tracking address!"
-
+            elif message_received.startswith('/') or message_received == 'leave':
+                operation_type.clear()
+                reply_message = "Leaving operation mode."
             else:
-                reply_message = f"Invalid input format.\n" \
-                                f"<wallet_address> <test>"
+                reply_message = f"Please enter a valid wallet address.\n"\
+                                f"Enter leave to leaving"
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
                     reply_token=reply_token,
                     messages=[TextMessage(text=reply_message)]
                 )
             )
-        else:
-            if message_received == '/wallet_management':
-                template_message = TemplateMessage(
-                    alt_text="Wallet Management",
-                    template=CarouselTemplate(
-                        columns=[
-                            {
-                                "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/add_wallet.png?raw=true",
-                                "title": "Add Wallet",
-                                "text": "Adding wallet to your tracking list.",
-                                "actions": [
-                                    MessageAction(
-                                        label="Add Wallet",
-                                        text="/add"
-                                    )
-                                ]
-                            },
-                            {
-                                "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/remove_wallet.png?raw=true",
-                                "title": "Remove Wallet",
-                                "text": "Removing wallet to your tracking list.",
-                                "actions": [
-                                    MessageAction(
-                                        label="Remove Wallet",
-                                        text="/remove"
-                                    )
-                                ]
-                            },
-                            {
-                                "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/get_wallet_list.png?raw=true",
-                                "title": "Get Wallet List",
-                                "text": "Getting your wallet tracking list.",
-                                "actions": [
-                                    MessageAction(
-                                        label="Get Wallet List ",
-                                        text="/list"
-                                    )
-                                ]
-                            }
-                        ]
-                    )
+        if message_received == '/wallet_management':
+            template_message = TemplateMessage(
+                alt_text="Wallet Management",
+                template=CarouselTemplate(
+                    columns=[
+                        {
+                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/add_wallet.png?raw=true",
+                            "title": "Add Wallet",
+                            "text": "Adding wallet to your tracking list.",
+                            "actions": [
+                                MessageAction(
+                                    label="Add Wallet",
+                                    text="/add"
+                                )
+                            ]
+                        },
+                        {
+                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/remove_wallet.png?raw=true",
+                            "title": "Remove Wallet",
+                            "text": "Removing wallet to your tracking list.",
+                            "actions": [
+                                MessageAction(
+                                    label="Remove Wallet",
+                                    text="/remove"
+                                )
+                            ]
+                        },
+                        {
+                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/get_wallet_list.png?raw=true",
+                            "title": "Get Wallet List",
+                            "text": "Getting your wallet tracking list.",
+                            "actions": [
+                                MessageAction(
+                                    label="Get Wallet List ",
+                                    text="/list"
+                                )
+                            ]
+                        }
+                    ]
                 )
-                line_bot_api.reply_message_with_http_info(ReplyMessageRequest(
+            )
+            line_bot_api.reply_message_with_http_info(ReplyMessageRequest(
+                reply_token=reply_token,
+                messages=[template_message]
+            ))
+        if message_received == '/account_management':
+            template_message = TemplateMessage(
+                alt_text="Account Management",
+                template=CarouselTemplate(
+                    columns=[
+                        {
+                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_line_notify.png?raw=true",
+                            "title": "Connect To Line Notify",
+                            "text": "Connecting to Line Notify.",
+                            "actions": [
+                                MessageAction(
+                                    label="Connect to Line Notify",
+                                    text="/connect_to_line_notify"
+                                )
+                            ]
+                        },
+                        {
+                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_discord.png?raw=true",
+                            "title": "Connect To Discord",
+                            "text": "Connecting to Discord.",
+                            "actions": [
+                                MessageAction(
+                                    label="Connect to Discord",
+                                    text="/connect_to_discord"
+                                )
+                            ]
+                        }
+                    ]
+                )
+            )
+            line_bot_api.reply_message_with_http_info(ReplyMessageRequest(
+                reply_token=reply_token,
+                messages=[template_message]
+            ))
+        if message_received == '/connect_to_line_notify':
+            if not utils.get_notify_token_by_user_id(user_id):
+                auth_link = line_notify.create_auth_link(user_id)
+                reply_message = auth_link
+            else:
+                reply_message = f"You have already connected your Line Notify!"
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
                     reply_token=reply_token,
-                    messages=[template_message]
-                ))
-            if message_received == '/account_management':
-                template_message = TemplateMessage(
-                    alt_text="Account Management",
-                    template=CarouselTemplate(
-                        columns=[
-                            {
-                                "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_line_notify.png?raw=true",
-                                "title": "Connect To Line Notify",
-                                "text": "Connecting to Line Notify.",
-                                "actions": [
-                                    MessageAction(
-                                        label="Connect to Line Notify",
-                                        text="/connect_to_line_notify"
-                                    )
-                                ]
-                            },
-                            {
-                                "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_discord.png?raw=true",
-                                "title": "Connect To Discord",
-                                "text": "Connecting to Discord.",
-                                "actions": [
-                                    MessageAction(
-                                        label="Connect to Discord",
-                                        text="/connect_to_discord"
-                                    )
-                                ]
-                            }
-                        ]
-                    )
+                    messages=[TextMessage(text=reply_message)]
                 )
-                line_bot_api.reply_message_with_http_info(ReplyMessageRequest(
+            )
+        if message_received == '/connect_to_discord':
+            reply_message = f"Coming soon!"
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
                     reply_token=reply_token,
-                    messages=[template_message]
-                ))
-            if message_received == '/connect_to_line_notify':
-                if not utils.get_notify_token_by_user_id(user_id):
-                    auth_link = line_notify.create_auth_link(user_id)
-                    reply_message = auth_link
-                else:
-                    reply_message = f"You have already connected your Line Notify!"
-                line_bot_api.reply_message_with_http_info(
-                    ReplyMessageRequest(
-                        reply_token=reply_token,
-                        messages=[TextMessage(text=reply_message)]
-                    )
+                    messages=[TextMessage(text=reply_message)]
                 )
-            if message_received == '/connect_to_discord':
-                reply_message = f"Coming soon!"
-                line_bot_api.reply_message_with_http_info(
-                    ReplyMessageRequest(
-                        reply_token=reply_token,
-                        messages=[TextMessage(text=reply_message)]
-                    )
+            )
+        if message_received == '/add':
+            notify_token = utils.get_notify_token_by_user_id(user_id)
+            if notify_token is None:
+                reply_message = f"Please connect your Line Notify first!\n" \
+                                f"Use /connect to connect it."
+            else:
+                reply_message = f"Please enter the wallet address you want to track."
+                operation_type[user_id] = 'add'
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
+                    reply_token=reply_token,
+                    messages=[TextMessage(text=reply_message)]
                 )
-            if message_received == '/add':
-                notify_token = utils.get_notify_token_by_user_id(user_id)
-                if notify_token is None:
-                    reply_message = f"Please connect your Line Notify first!\n" \
-                                    f"Use /connect to connect it."
-                else:
-                    reply_message = f"Please enter the wallet address you want to track."
-                    operation_type = 'add'
-                line_bot_api.reply_message_with_http_info(
-                    ReplyMessageRequest(
-                        reply_token=reply_token,
-                        messages=[TextMessage(text=reply_message)]
-                    )
+            )
+        if message_received.startswith('/remove'):
+            notify_token = utils.get_notify_token_by_user_id(user_id)
+            if notify_token is None:
+                reply_message = f"Please connect your Line Notify first!\n" \
+                                f"Use /connect to connect it."
+            else:
+                reply_message = f"Please enter the wallet address you want to remove."
+                operation_type = 'remove'
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
+                    reply_token=reply_token,
+                    messages=[TextMessage(text=reply_message)]
                 )
-            if message_received.startswith('/remove'):
-                notify_token = utils.get_notify_token_by_user_id(user_id)
-                if notify_token is None:
-                    reply_message = f"Please connect your Line Notify first!\n" \
-                                    f"Use /connect to connect it."
-                else:
-                    reply_message = f"Please enter the wallet address you want to remove."
-                    operation_type = 'remove'
-                line_bot_api.reply_message_with_http_info(
-                    ReplyMessageRequest(
-                        reply_token=reply_token,
-                        messages=[TextMessage(text=reply_message)]
-                    )
+            )
+        if message_received.startswith('/list'):
+            parts = message_received.split()
+            network = 'ETH_MAINNET'
+            if len(parts) == 2:
+                network = 'ETH_GOERLI'
+            user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
+            if not user_tracked_wallets:
+                reply_message = f"You have not added any tracking address yet!\n" \
+                                f"Press Add Wallet to add one."
+            else:
+                reply_message = f"Tracking Wallets in {network}:\n"
+                for wallet in user_tracked_wallets:
+                    reply_message += f"{wallet}\n"
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
+                    reply_token=reply_token,
+                    messages=[TextMessage(text=reply_message)]
                 )
-            if message_received.startswith('/list'):
-                parts = message_received.split()
-                network = 'ETH_MAINNET'
-                if len(parts) == 2:
-                    network = 'ETH_GOERLI'
-                user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
-                if not user_tracked_wallets:
-                    reply_message = f"You have not added any tracking address yet!\n" \
-                                    f"Press Add Wallet to add one."
-                else:
-                    reply_message = f"Tracking Wallets in {network}:\n"
-                    for wallet in user_tracked_wallets:
-                        reply_message += f"{wallet}\n"
-                line_bot_api.reply_message_with_http_info(
-                    ReplyMessageRequest(
-                        reply_token=reply_token,
-                        messages=[TextMessage(text=reply_message)]
-                    )
-                )
+            )
 
 
 @handler.add(FollowEvent)
