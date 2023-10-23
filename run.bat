@@ -1,0 +1,1 @@
+start WalletTracker.exe /CONSOLE pause
