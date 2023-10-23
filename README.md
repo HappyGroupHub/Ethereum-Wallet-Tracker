@@ -19,7 +19,7 @@ Project progress:
 | Line-Notify support |   ☑️    |
 | Discord bot support |   🛠️   |
 | Normal txns         |   ☑️    |
-| Internal txns       |   🛠️   |
+| Internal txns       |   ☑️    |
 | ERC20 token txns    |   ☑️    |
 | ERC721 token txns   |   ☑️    |
 | ERC1155 token txns  |   ❌️    |
@@ -190,7 +190,7 @@ find out how to use it [here](#Use-Ngrok-to-create-a-static-reverse-proxy).
 ### Find bugs or having suggestions?
 
 If you have any suggestions or found any bugs, please open an
-issue [here](https://github.com/HappyGroupHub/Discord-Line-Message-Sync/issues), will try to fix it as soon as possible.
+issue [here](https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/issues), will try to fix it as soon as possible.
 
 ### Support this project
 
@@ -225,7 +225,7 @@ Goerli 測試網路。
 | 支援 Line-Notify 通知 | ☑️  |
 | 支援 Discord 機器人通知  | 🛠️ |
 | 一般的交易活動           | ☑️  |
-| 內部交易活動            | 🛠️ |
+| 內部交易活動            | ☑️  |
 | ERC20 代幣活動        | ☑️  |
 | ERC721 代幣活動       | ☑️  |
 | ERC1155 代幣活動      | ❌️  |

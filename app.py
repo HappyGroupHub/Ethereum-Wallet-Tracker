@@ -162,7 +162,7 @@ def handle_message(event):
                 template=CarouselTemplate(
                     columns=[
                         {
-                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/add_wallet.png?raw=true",
+                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/master/images/add_wallet.png?raw=true",
                             "title": "Add Wallet",
                             "text": "Adding wallet to your tracking list.",
                             "actions": [
@@ -173,7 +173,7 @@ def handle_message(event):
                             ]
                         },
                         {
-                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/remove_wallet.png?raw=true",
+                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/master/images/remove_wallet.png?raw=true",
                             "title": "Remove Wallet",
                             "text": "Removing wallet to your tracking list.",
                             "actions": [
@@ -184,7 +184,7 @@ def handle_message(event):
                             ]
                         },
                         {
-                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/get_wallet_list.png?raw=true",
+                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/master/images/get_wallet_list.png?raw=true",
                             "title": "Get Wallet List",
                             "text": "Getting your wallet tracking list.",
                             "actions": [
