@@ -5,6 +5,7 @@ import os
 import time
 from threading import Thread
 
+import linebot.v3.messaging
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,6 +46,7 @@ handler = WebhookHandler(config['line_channel_secret'])
 
 operation_type = {}
 merging_txns = []
+
 eth_mainnet = 'ETH_MAINNET'
 eth_goerli = 'ETH_GOERLI'
 
@@ -74,15 +76,14 @@ async def notify(request: Request):
     response_form = await request.form()
     auth_code = response_form['code']
     user_id = response_form['state']
-
     notify_token = line_notify.get_notify_token_by_auth_code(auth_code)
     utils.add_notify_token_by_user_id(user_id, notify_token)
-    push_message = f"Successfully connected to Line Notify! " \
-                   f"You may now use /add <wallet_address> " \
+    push_message = f"Successfully connected to Line Notify! \n" \
+                   f"You can press Add Wallet to add wallet to tracking list. \n" \
                    f"to start tracking your Ethereum Wallet.\n" \
                    f"Use /help to see all commands."
-    line_notify.send_message(push_message, notify_token)
 
+    line_notify.send_message(push_message, notify_token)
     show_message = f"Successfully connected to LINE Notify! " \
                    f"You may now close this page."
     return show_message
@@ -210,7 +211,7 @@ def handle_message(event):
                         {
                             "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_line_notify.png?raw=true",
                             "title": "Line Notify",
-                            "text": "Connecting to Line Notify.",
+                            "text": "Get notifications from Line Notify.",
                             "actions": [
                                 MessageAction(
                                     label="Connect Line Notify",
@@ -221,7 +222,7 @@ def handle_message(event):
                         {
                             "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_discord.png?raw=true",
                             "title": "Discord Bot",
-                            "text": "Connecting to Discord.",
+                            "text": "Get notifications from Discord Bot.",
                             "actions": [
                                 MessageAction(
                                     label="Connect to Discord",
@@ -260,7 +261,7 @@ def handle_message(event):
             notify_token = utils.get_notify_token_by_user_id(user_id)
             if notify_token is None:
                 reply_message = f"Please connect your Line Notify first!\n" \
-                                f"Use /connect to connect it."
+                                f"Press Connect Line Notify to connect it."
             else:
                 reply_message = f"Please enter the wallet address you want to track."
                 operation_type[user_id] = 'add'
@@ -274,7 +275,7 @@ def handle_message(event):
             notify_token = utils.get_notify_token_by_user_id(user_id)
             if notify_token is None:
                 reply_message = f"Please connect your Line Notify first!\n" \
-                                f"Use /connect to connect it."
+                                f"Press Connect Line Notify to connect it."
             else:
                 reply_message = f"Please enter the wallet address you want to remove."
                 operation_type['user_id'] = 'remove'
@@ -296,7 +297,7 @@ def handle_message(event):
             else:
                 reply_message = f"Tracking Wallets in {network}:\n"
                 for wallet in user_tracked_wallets:
-                    reply_message += f"{wallet}\n"
+                    reply_message += f"\n{wallet}"
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
                     reply_token=reply_token,
