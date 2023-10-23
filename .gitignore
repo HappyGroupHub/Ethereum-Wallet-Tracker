@@ -1,5 +1,8 @@
 # Config File
 config.yml
+tracking_wallets.json
+notify_token_pairs.json
+user_tracking_list.json
 
 # Logs
 *.log
