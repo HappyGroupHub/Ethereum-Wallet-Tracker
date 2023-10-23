@@ -5,7 +5,6 @@ import os
 import time
 from threading import Thread
 
-import linebot.v3.messaging
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -101,17 +100,19 @@ def handle_message(event):
         if user_id in operation_type and message_received.startswith('/'):
             operation_type.pop(user_id)
         if user_id in operation_type:
+            parts = message_received.split()
+            wallet_address = parts[0].lower()
+            network = 'ETH_MAINNET'
+            if len(parts) == 2:
+                if parts[-1] == 'test':
+                    network = 'ETH_GOERLI'
+                    wallet_address = parts[-2].lower()
+
             if message_received == 'leave':
                 reply_message = f"Process Ended!"
                 operation_type.pop(user_id)
-            elif message_received.startswith('0x') and len(message_received) == 42:
+            elif wallet_address.startswith('0x') and len(wallet_address) == 42:
                 notify_token = utils.get_notify_token_by_user_id(user_id)
-                parts = message_received.split()
-                wallet_address = parts[0].lower()
-                network = 'ETH_MAINNET'
-                if len(parts) >= 2 and parts[-1] == 'test':
-                    network = 'ETH_GOERLI'
-                    wallet_address = parts[-2].lower()
                 tracking_wallets = utils.get_tracking_wallets(network)
                 user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
 
@@ -119,7 +120,6 @@ def handle_message(event):
                     if wallet_address in user_tracked_wallets:
                         reply_message = f"Wallet address has already been added before!\n" \
                                         f"Press Get Wallet List Button to see all tracking addresses."
-                        operation_type.pop(user_id)
                     else:
                         if wallet_address not in tracking_wallets:
                             al.add_tracking_address(tracking_wallets['webhook_id'], wallet_address)
@@ -131,22 +131,21 @@ def handle_message(event):
                         line_notify.send_message(reply_message, notify_token)
                         reply_message = f"Successfully added new tracking address!"
                         operation_type.pop(user_id)
-                elif operation_type == 'remove':
+                elif operation_type[user_id] == 'remove':
                     if wallet_address not in user_tracked_wallets:
                         reply_message = f"Wallet address not found in tracking list!\n" \
                                         f"Press Get Wallet List Button to see all tracking addresses."
-                        operation_type.pop(user_id)
                     else:
                         if wallet_address in tracking_wallets:
                             al.remove_tracking_address(tracking_wallets['webhook_id'],
                                                        wallet_address)
                         utils.remove_tracking_wallet(network, wallet_address, notify_token)
                         utils.remove_tracking_address_by_user_id(user_id, network, wallet_address)
-                        reply_message = f"Successfully removed the tracking address!\n" \
+                        reply_message = f"Successfully removed one tracking address!\n" \
                                         f"Network: {network}\n" \
                                         f"Wallet Address: {wallet_address}"
                         line_notify.send_message(reply_message, notify_token)
-                        reply_message = f"Successfully removed the tracking address!"
+                        reply_message = f"Successfully removed tracking address!"
                         operation_type.pop(user_id)
             else:
                 reply_message = f"Please enter a valid wallet address.\n" \
@@ -278,7 +277,7 @@ def handle_message(event):
                                 f"Press Connect Line Notify to connect it."
             else:
                 reply_message = f"Please enter the wallet address you want to remove."
-                operation_type['user_id'] = 'remove'
+                operation_type[user_id] = 'remove'
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
                     reply_token=reply_token,
@@ -289,7 +288,8 @@ def handle_message(event):
             parts = message_received.split()
             network = 'ETH_MAINNET'
             if len(parts) == 2:
-                network = 'ETH_GOERLI'
+                if parts[-1] == 'test':
+                    network = 'ETH_GOERLI'
             user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
             if not user_tracked_wallets:
                 reply_message = f"You have not added any tracking address yet!\n" \
