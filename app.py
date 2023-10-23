@@ -17,7 +17,6 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent, FollowEvent
 
 import alchemy as al
 import etherscan as eth
-import initial_checks
 import line_notify
 import utilities as utils
 
@@ -623,7 +622,7 @@ def open_rich_menu():
 
 
 if __name__ == '__main__':
-    initial_checks.check()
+    utils.initial_checks()
     thread = Thread(target=filter_txns)
     thread.start()
     open_rich_menu()
