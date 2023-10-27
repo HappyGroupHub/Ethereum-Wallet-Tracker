@@ -52,6 +52,9 @@ Project progress:
 # Find out more here: https://ngrok.com/
 # Notes: Make sure the webhook url is started with https:// and ended without a slash (/)
 webhook_url: ''
+# Port for the webhook to listen on. Default is 5000.
+# If you change this, make sure to change the port in your reverse proxy as well.
+webhook_port: 5000
 
 # Paste your Etherscan api key and Alchemy Webhook Auth Token here.
 # Etherscan: https://etherscan.io/myapikey
@@ -258,6 +261,9 @@ Goerli 測試網路。
 # Find out more here: https://ngrok.com/
 # Notes: Make sure the webhook url is started with https:// and ended without a slash (/)
 webhook_url: ''
+# Port for the webhook to listen on. Default is 5000.
+# If you change this, make sure to change the port in your reverse proxy as well.
+webhook_port: 5000
 
 # Paste your Etherscan api key and Alchemy Webhook Auth Token here.
 # Etherscan: https://etherscan.io/myapikey

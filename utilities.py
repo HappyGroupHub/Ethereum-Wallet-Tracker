@@ -52,6 +52,9 @@ def config_file_generator():
 # Find out more here: https://ngrok.com/
 # Notes: Make sure the webhook url is started with https:// and ended without a slash (/)
 webhook_url: ''
+# Port for the webhook to listen on. Default is 5000.
+# If you change this, make sure to change the port in your reverse proxy as well.
+webhook_port: 5000
 
 # Paste your Etherscan api key and Alchemy Webhook Auth Token here.
 # Etherscan: https://etherscan.io/myapikey
@@ -90,6 +93,7 @@ def read_config():
             data = yaml.load(file, Loader=SafeLoader)
             config = {
                 'webhook_url': data['webhook_url'],
+                'webhook_port': data['webhook_port'],
                 'etherscan_api_key': data['etherscan_api_key'],
                 'alchemy_webhook_auth_token': data['alchemy_webhook_auth_token'],
                 'line_channel_access_token': data['line_channel_access_token'],

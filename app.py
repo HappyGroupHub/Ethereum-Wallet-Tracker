@@ -626,4 +626,4 @@ if __name__ == '__main__':
     thread = Thread(target=filter_txns)
     thread.start()
     open_rich_menu()
-    uvicorn.run(app, port=5000)
+    uvicorn.run(app, port=config['webhook_port'])
