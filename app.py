@@ -162,7 +162,7 @@ def handle_message(event):
                 template=CarouselTemplate(
                     columns=[
                         {
-                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/master/images/add_wallet.png?raw=true",
+                            "thumbnail_image_url": "https://media.discordapp.net/attachments/817107065981501460/1167281246624288858/add_wallet.png?ex=654d8e60&is=653b1960&hm=5d169f9c8d9b6a900241b17b081118a7d9fa258885c75d925f93ee742fffd9dd&=",
                             "title": "Add Wallet",
                             "text": "Adding wallet to your tracking list.",
                             "actions": [
@@ -173,7 +173,7 @@ def handle_message(event):
                             ]
                         },
                         {
-                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/master/images/remove_wallet.png?raw=true",
+                            "thumbnail_image_url": "https://cdn.discordapp.com/attachments/817107065981501460/1167285155220705340/remove_wallet.png?ex=654d9204&is=653b1d04&hm=2e1ee1d955e573712c7be200381eb288a9649bdf9dcc835c1b548dde4871a913&",
                             "title": "Remove Wallet",
                             "text": "Removing wallet to your tracking list.",
                             "actions": [
@@ -184,7 +184,7 @@ def handle_message(event):
                             ]
                         },
                         {
-                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/master/images/get_wallet_list.png?raw=true",
+                            "thumbnail_image_url": "https://cdn.discordapp.com/attachments/817107065981501460/1167285146261663834/get_wallet_list.png?ex=654d9201&is=653b1d01&hm=b297849c806528e7217ded6aa3b7d08730ddc2c80c852dd17b3fe0d94fefdede&",
                             "title": "Get Wallet List",
                             "text": "Getting your wallet tracking list.",
                             "actions": [
@@ -207,7 +207,7 @@ def handle_message(event):
                 template=CarouselTemplate(
                     columns=[
                         {
-                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_line_notify.png?raw=true",
+                            "thumbnail_image_url": "https://cdn.discordapp.com/attachments/817107065981501460/1167285100350803978/connect_to_line_notify.png?ex=654d91f7&is=653b1cf7&hm=08d610ad8e837a7c9b8c20a5baaa97b71c2052907a8f4b831e95242a1554ca9b&",
                             "title": "Line Notify",
                             "text": "Get notifications from Line Notify.",
                             "actions": [
@@ -218,7 +218,7 @@ def handle_message(event):
                             ]
                         },
                         {
-                            "thumbnail_image_url": "https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/dev/images/connect_to_discord.png?raw=true",
+                            "thumbnail_image_url": "https://cdn.discordapp.com/attachments/817107065981501460/1167285120198246462/connect_to_discord.png?ex=654d91fb&is=653b1cfb&hm=4476212130c59488c8c957f77dabe16f479dd14b857db40c17e0ad30a8b43e74&",
                             "title": "Discord Bot",
                             "text": "Get notifications from Discord Bot.",
                             "actions": [
