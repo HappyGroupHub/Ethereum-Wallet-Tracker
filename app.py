@@ -446,18 +446,18 @@ async def verify_merge_then_send_notify(txn: dict):
             # Merge the transactions and send notify
             if len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'normal':
                 line_notify.send_notify(normal_txn, 'normal', txn['line_notify_tokens'])
-                logging.info(f'Sent normal txn notify - {txn["hash"]}')
+                logging.info(f'Sent normal txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'internal':
                 line_notify.send_notify(internal_txn, 'internal', txn['line_notify_tokens'])
-                logging.info(f'Sent internal txn notify - {txn["hash"]}')
+                logging.info(f'Sent internal txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc20':
                 erc20_txn['spend_value'] = 'Transfer'
                 line_notify.send_notify(erc20_txn, 'erc20', txn['line_notify_tokens'])
-                logging.info(f'Sent erc20 txn notify - {txn["hash"]}')
+                logging.info(f'Sent erc20 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc721':
                 erc721_txn['spend_value'] = 'Transfer'
                 line_notify.send_notify(erc721_txn, 'erc721', txn['line_notify_tokens'])
-                logging.info(f'Sent erc721 txn notify - {txn["hash"]}')
+                logging.info(f'Sent erc721 txn notify - {txn["txn_hash"]}')
 
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type']:
@@ -466,7 +466,7 @@ async def verify_merge_then_send_notify(txn: dict):
                 else:
                     erc20_txn['spend_value'] = f"{normal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc20_txn, 'erc20', txn['line_notify_tokens'])
-                logging.info(f'Sent normal/erc20 txn notify - {txn["hash"]}')
+                logging.info(f'Sent normal/erc20 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 new_txn = normal_txn
@@ -478,24 +478,24 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
                 line_notify.send_notify(new_txn, 'erc721', txn['line_notify_tokens'])
-                logging.info(f'Sent normal/erc721 txn notify - {txn["hash"]}')
+                logging.info(f'Sent normal/erc721 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 2 and 'erc20' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 new_txn = erc20_txn
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
                 line_notify.send_notify(new_txn, 'erc20_721', txn['line_notify_tokens'])
-                logging.info(f'Sent erc20/erc721 txn notify - {txn["hash"]}')
+                logging.info(f'Sent erc20/erc721 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 2 and 'internal' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 erc721_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc721_txn, 'internal_721', txn['line_notify_tokens'])
-                logging.info(f'Sent internal/erc721 txn notify - {txn["hash"]}')
+                logging.info(f'Sent internal/erc721 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'internal' in txn[
                 'txn_type']:
                 erc20_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc20_txn, 'normal_internal', txn['line_notify_tokens'])
-                logging.info(f'Sent normal/internal txn notify - {txn["hash"]}')
+                logging.info(f'Sent normal/internal txn notify - {txn["txn_hash"]}')
 
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type'] and 'erc721' in txn['txn_type']:
@@ -506,12 +506,12 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['token_symbol'] = erc20_txn['token_symbol']
                 new_txn['token_balance'] = erc20_txn['token_balance']
                 line_notify.send_notify(new_txn, 'normal_20_721', txn['line_notify_tokens'])
-                logging.info(f'Sent normal/erc20/erc721 txn notify - {txn["hash"]}')
+                logging.info(f'Sent normal/erc20/erc721 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'internal' in txn[
                 'txn_type'] and 'erc20' in txn['txn_type']:
                 erc20_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
                 line_notify.send_notify(erc20_txn, 'normal_internal_20', txn['line_notify_tokens'])
-                logging.info(f'Sent normal/internal/erc20 txn notify - {txn["hash"]}')
+                logging.info(f'Sent normal/internal/erc20 txn notify - {txn["txn_hash"]}')
 
             break
         except TypeError:
