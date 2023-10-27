@@ -77,9 +77,8 @@ async def notify(request: Request):
     notify_token = line_notify.get_notify_token_by_auth_code(auth_code)
     utils.add_notify_token_by_user_id(user_id, notify_token)
     push_message = f"Successfully connected to Line Notify! \n" \
-                   f"You can press Add Wallet to add wallet to tracking list. \n" \
-                   f"to start tracking your Ethereum Wallet.\n" \
-                   f"Use /help to see all commands."
+                   f"You may now press Wallet Management on the menu below\n" \
+                   f"Start tracking your Ethereum Wallet.\n" \
 
     line_notify.send_message(push_message, notify_token)
     show_message = f"Successfully connected to LINE Notify! " \
@@ -108,7 +107,7 @@ def handle_message(event):
                     wallet_address = parts[-2].lower()
 
             if message_received == 'leave':
-                reply_message = f"Process Ended!"
+                reply_message = f"Binding process ended!"
                 operation_type.pop(user_id)
             elif wallet_address.startswith('0x') and len(wallet_address) == 42:
                 notify_token = utils.get_notify_token_by_user_id(user_id)
@@ -148,7 +147,7 @@ def handle_message(event):
                         operation_type.pop(user_id)
             else:
                 reply_message = f"Please enter a valid wallet address.\n" \
-                                f"Enter 'leave' to leaving"
+                                f"Enter 'leave' to end the process."
             line_bot_api.reply_message_with_http_info(
                 ReplyMessageRequest(
                     reply_token=reply_token,
@@ -164,7 +163,7 @@ def handle_message(event):
                         {
                             "thumbnail_image_url": "https://media.discordapp.net/attachments/817107065981501460/1167281246624288858/add_wallet.png?ex=654d8e60&is=653b1960&hm=5d169f9c8d9b6a900241b17b081118a7d9fa258885c75d925f93ee742fffd9dd&=",
                             "title": "Add Wallet",
-                            "text": "Adding wallet to your tracking list.",
+                            "text": "Add a wallet to your tracking list.",
                             "actions": [
                                 MessageAction(
                                     label="Add Wallet",
@@ -175,7 +174,7 @@ def handle_message(event):
                         {
                             "thumbnail_image_url": "https://cdn.discordapp.com/attachments/817107065981501460/1167285155220705340/remove_wallet.png?ex=654d9204&is=653b1d04&hm=2e1ee1d955e573712c7be200381eb288a9649bdf9dcc835c1b548dde4871a913&",
                             "title": "Remove Wallet",
-                            "text": "Removing wallet to your tracking list.",
+                            "text": "Remove a wallet from your tracking list.",
                             "actions": [
                                 MessageAction(
                                     label="Remove Wallet",
@@ -186,7 +185,7 @@ def handle_message(event):
                         {
                             "thumbnail_image_url": "https://cdn.discordapp.com/attachments/817107065981501460/1167285146261663834/get_wallet_list.png?ex=654d9201&is=653b1d01&hm=b297849c806528e7217ded6aa3b7d08730ddc2c80c852dd17b3fe0d94fefdede&",
                             "title": "Get Wallet List",
-                            "text": "Getting your wallet tracking list.",
+                            "text": "Get your tracking wallet list.",
                             "actions": [
                                 MessageAction(
                                     label="Get Wallet List ",
@@ -238,7 +237,9 @@ def handle_message(event):
         if message_received == '/connect_to_line_notify':
             if not utils.get_notify_token_by_user_id(user_id):
                 auth_link = line_notify.create_auth_link(user_id)
-                reply_message = auth_link
+                reply_message = f"Please connect your Line Notify by the following link first!\n" \
+                                f"(1-on-1 chat with Line Notify)\n" \
+                                f"\n{auth_link}"
             else:
                 reply_message = f"You have already connected your Line Notify!"
             line_bot_api.reply_message_with_http_info(
@@ -292,7 +293,7 @@ def handle_message(event):
             user_tracked_wallets = utils.get_tracking_addresses_by_user_id(user_id, network)
             if not user_tracked_wallets:
                 reply_message = f"You have not added any tracking address yet!\n" \
-                                f"Press Add Wallet to add one."
+                                f"Press Wallet Management to add one."
             else:
                 reply_message = f"Tracking Wallets in {network}:\n"
                 for wallet in user_tracked_wallets:
@@ -591,9 +592,9 @@ def open_rich_menu():
 
         rich_menu = RichMenuRequest(
             size=RichMenuSize(width=2500, height=843),
-            selected=False,
+            selected=True,
             name="my-rich-menu",
-            chat_bar_text="Tap to open",
+            chat_bar_text="Open Menu",
             areas=[
                 RichMenuArea(
                     bounds=RichMenuBounds(x=0, y=0, width=1250, height=843),
