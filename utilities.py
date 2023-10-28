@@ -6,10 +6,10 @@ from os.path import exists
 import yaml
 from yaml import SafeLoader
 
-import alchemy
-
 
 def initial_checks():
+    import alchemy
+
     if not exists('./tracking_wallets.json'):
         print("Wallet tracking list not found, creating one by default.")
         eth_id = alchemy.create_address_activity_webhook('ETH_MAINNET')
