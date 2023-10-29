@@ -372,6 +372,18 @@ async def alchemy(request: Request):
                 {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc721',
                  'target': target, 'block_num': block_num,
                  'line_notify_tokens': tracking_wallets[target]})
+        elif json_received['event']['activity'][0]['category'] == 'token':  # erc20 txn
+            logging.debug('adding erc20 txn')
+            merging_txns.append(
+                {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc20',
+                 'target': target, 'block_num': block_num,
+                 'line_notify_tokens': tracking_wallets[target]})
+            if len(json_received['event']['activity']) >= 2:  # erc20 + erc721 txn
+                logging.debug('adding erc721 txn')
+                merging_txns.append(
+                    {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc721',
+                     'target': target, 'block_num': block_num,
+                     'line_notify_tokens': tracking_wallets[target]})
 
 
 async def verify_merge_then_send_notify(txn: dict):
