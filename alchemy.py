@@ -10,11 +10,13 @@ webhook_url = config.get('webhook_url')
 
 alchemy_webhook_auth_token = config.get('alchemy_webhook_auth_token')
 
-http.client.HTTPConnection.debuglevel = 1
+# Uncomment these lines to see the http request and response headers and body.
+# This is useful for debugging, but will become a security risk in production.
+# Please don't commit these lines to git, make sure they are commented out.
+# http.client.HTTPConnection.debuglevel = 1
+# logging.basicConfig()
+# logging.getLogger().setLevel(logging.DEBUG)
 
-# You must initialize logging, otherwise you'll not see debug output.
-logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
 requests_log = logging.getLogger("requests.packages.urllib3")
 requests_log.setLevel(logging.DEBUG)
 requests_log.propagate = True
