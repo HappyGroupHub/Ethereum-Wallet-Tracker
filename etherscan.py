@@ -273,13 +273,13 @@ def format_txn(txn, txn_type, target_address, goerli=False):
     else:
         base_url = 'https://goerli.etherscan.io'
         txn['wallet_balance'] = get_wallet_balance(target_address, goerli=True)['balance']
+    if 'gasPrice' in txn:
+        txn['gas_price'] = utils.wei_to_gwei(int(txn['gasPrice']))
+        txn['gas_used'] = float(txn['gasUsed'])
+        txn['gas_fee'] = txn['gas_price'] * txn['gas_used']
+    txn['block_number'] = int(txn['blockNumber'])
     txn['txn_url'] = f'{base_url}/tx/{txn["hash"]}'
     txn['time'] = datetime.fromtimestamp(int(txn['timeStamp'])).strftime('%Y-%m-%d %H:%M:%S')
-    txn['gas_price'] = utils.wei_to_gwei(int(txn['gasPrice']))
-    txn['gas_used'] = float(txn['gasUsed'])
-    txn['gas_fee'] = txn['gas_price'] * txn['gas_used']
-    txn['gas_fee_usd'] = txn['gas_fee'] * get_eth_price(goerli=goerli)
-    txn['block_number'] = int(txn['blockNumber'])
     txn['block_hash'] = txn['blockHash']
     txn['contract_address'] = txn['contractAddress']
     if txn_type == 'normal':

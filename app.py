@@ -372,6 +372,18 @@ async def alchemy(request: Request):
                 {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc721',
                  'target': target, 'block_num': block_num,
                  'line_notify_tokens': tracking_wallets[target]})
+        elif json_received['event']['activity'][0]['category'] == 'token':  # erc20 txn
+            logging.debug('adding erc20 txn')
+            merging_txns.append(
+                {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc20',
+                 'target': target, 'block_num': block_num,
+                 'line_notify_tokens': tracking_wallets[target]})
+            if len(json_received['event']['activity']) >= 2:  # erc20 + erc721 txn
+                logging.debug('adding erc721 txn')
+                merging_txns.append(
+                    {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc721',
+                     'target': target, 'block_num': block_num,
+                     'line_notify_tokens': tracking_wallets[target]})
 
 
 async def verify_merge_then_send_notify(txn: dict):
@@ -494,8 +506,8 @@ async def verify_merge_then_send_notify(txn: dict):
                 logging.info(f'Sent internal/erc721 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'internal' in txn[
                 'txn_type']:
-                erc20_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
-                line_notify.send_notify(erc20_txn, 'normal_internal', txn['line_notify_tokens'])
+                normal_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
+                line_notify.send_notify(normal_txn, 'normal_internal', txn['line_notify_tokens'])
                 logging.info(f'Sent normal/internal txn notify - {txn["txn_hash"]}')
 
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'erc20' in txn[
