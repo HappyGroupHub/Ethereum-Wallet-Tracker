@@ -340,11 +340,16 @@ async def alchemy(request: Request):
         tracking_wallets = utils.get_tracking_wallets(txn_network)
         address_list = [key.lower() for key in tracking_wallets.keys()]
 
-        # Analyze the target wallet address
+        # Analyze the target wallet address and line notify tokens
+        target = ''
+        line_notify_tokens = []
+        if json_received['event']['activity'][0]['toAddress'] in address_list:
+            target = str(json_received['event']['activity'][0]['toAddress'])
+            line_notify_tokens.extend(tracking_wallets[target])
         if json_received['event']['activity'][0]['fromAddress'] in address_list:
             target = str(json_received['event']['activity'][0]['fromAddress'])
-        else:
-            target = str(json_received['event']['activity'][0]['toAddress'])
+            line_notify_tokens.extend(tracking_wallets[target])
+        line_notify_tokens = list(set(line_notify_tokens))
 
         # Determine the transaction type and add to merging_txns list
         if 'asset' in json_received['event']['activity'][0]:
@@ -353,37 +358,37 @@ async def alchemy(request: Request):
                 merging_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'internal',
                      'target': target, 'block_num': block_num,
-                     'line_notify_tokens': tracking_wallets[target]})
+                     'line_notify_tokens': line_notify_tokens})
             elif json_received['event']['activity'][0]['asset'] == 'ETH':  # normal txn
                 logging.debug('adding normal txn')
                 merging_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'normal',
                      'target': target, 'block_num': block_num,
-                     'line_notify_tokens': tracking_wallets[target]})
+                     'line_notify_tokens': line_notify_tokens})
             else:  # erc20 txn
                 logging.debug('adding erc20 txn')
                 merging_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc20',
                      'target': target, 'block_num': block_num,
-                     'line_notify_tokens': tracking_wallets[target]})
+                     'line_notify_tokens': line_notify_tokens})
         elif 'erc721TokenId' in json_received['event']['activity'][0]:  # erc721 txn
             logging.debug('adding erc721 txn')
             merging_txns.append(
                 {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc721',
                  'target': target, 'block_num': block_num,
-                 'line_notify_tokens': tracking_wallets[target]})
+                 'line_notify_tokens': line_notify_tokens})
         elif json_received['event']['activity'][0]['category'] == 'token':  # erc20 txn
             logging.debug('adding erc20 txn')
             merging_txns.append(
                 {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc20',
                  'target': target, 'block_num': block_num,
-                 'line_notify_tokens': tracking_wallets[target]})
+                 'line_notify_tokens': line_notify_tokens})
             if len(json_received['event']['activity']) >= 2:  # erc20 + erc721 txn
                 logging.debug('adding erc721 txn')
                 merging_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc721',
                      'target': target, 'block_num': block_num,
-                     'line_notify_tokens': tracking_wallets[target]})
+                     'line_notify_tokens': line_notify_tokens})
 
 
 async def verify_merge_then_send_notify(txn: dict):
