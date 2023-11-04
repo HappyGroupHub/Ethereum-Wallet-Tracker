@@ -43,7 +43,7 @@ def config_file_generator():
     """Generate the template of config file"""
     with open('config.yml', 'w', encoding="utf8") as file:
         file.write("""# ++--------------------------------++
-# | Ethereum Wallet Tracker  v0.1.0  |
+# | Ethereum Wallet Tracker  v0.1.1  |
 # | Made by LD & K                   |
 # ++--------------------------------++
 
