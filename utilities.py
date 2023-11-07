@@ -43,7 +43,7 @@ def config_file_generator():
     """Generate the template of config file"""
     with open('config.yml', 'w', encoding="utf8") as file:
         file.write("""# ++--------------------------------++
-# | Ethereum Wallet Tracker  v0.1.0  |
+# | Ethereum Wallet Tracker  v0.1.1  |
 # | Made by LD & K                   |
 # ++--------------------------------++
 
@@ -89,7 +89,7 @@ def read_config():
             config_file_generator()
 
     try:
-        with open('config.yml', 'r', encoding="utf8") as file:
+        with open('config.yml', encoding="utf8") as file:
             data = yaml.load(file, Loader=SafeLoader)
             config = {
                 'webhook_url': data['webhook_url'],
@@ -121,7 +121,7 @@ def get_tracking_wallets(network):
     :param str network: The network of the target. (ETH_MAINNET or ETH_GOERLI)
     :return dict: Tracking wallets of the network.
     """
-    data = json.load(open('tracking_wallets.json', 'r', encoding="utf8"))
+    data = json.load(open('tracking_wallets.json', encoding="utf8"))
     return data[network]
 
 
@@ -137,7 +137,7 @@ def add_tracking_wallet(network, address, notify_token):
     :param str address: The address to add.
     :param str notify_token: The notify token of the user.
     """
-    data = json.load(open('tracking_wallets.json', 'r', encoding="utf8"))
+    data = json.load(open('tracking_wallets.json', encoding="utf8"))
     if address not in data[network]:
         data[network][address] = [notify_token]
     else:
@@ -157,7 +157,7 @@ def remove_tracking_wallet(network, address, notify_token):
     :param str address: The address to remove.
     :param str notify_token: The notify token of the user.
     """
-    data = json.load(open('tracking_wallets.json', 'r', encoding="utf8"))
+    data = json.load(open('tracking_wallets.json', encoding="utf8"))
     if len(data[network][address]) == 1:
         data[network].pop(address)
     else:
@@ -171,7 +171,7 @@ def add_notify_token_by_user_id(user_id, notify_token):
     :param str user_id: The user id of the user.
     :param str notify_token: The notify token of the user.
     """
-    data = json.load(open('notify_token_pairs.json', 'r', encoding="utf8"))
+    data = json.load(open('notify_token_pairs.json', encoding="utf8"))
     data[user_id] = notify_token
     update_json('notify_token_pairs.json', data)
 
@@ -182,7 +182,7 @@ def get_notify_token_by_user_id(user_id):
     :param str user_id: The user id of the user.
     :return str: The notify token of the user.
     """
-    data = json.load(open('notify_token_pairs.json', 'r', encoding="utf8"))
+    data = json.load(open('notify_token_pairs.json', encoding="utf8"))
     if user_id not in data:
         return None
     return data[user_id]
@@ -199,7 +199,7 @@ def get_tracking_addresses_by_user_id(user_id, network):
     :param str network: Network type you would like to search.
     :return list: The list of tracking addresses.
     """
-    data = json.load(open('user_tracking_list.json', 'r', encoding="utf8"))
+    data = json.load(open('user_tracking_list.json', encoding="utf8"))
     if user_id not in data[network]:
         return []
     return data[network][user_id]
@@ -216,7 +216,7 @@ def add_tracking_address_by_user_id(user_id, network, address):
     :param str network: The network of the address.
     :param str address: The address to add.
     """
-    data = json.load(open('user_tracking_list.json', 'r', encoding="utf8"))
+    data = json.load(open('user_tracking_list.json', encoding="utf8"))
     if user_id not in data[network]:
         data[network][user_id] = [address]
     else:
@@ -235,7 +235,7 @@ def remove_tracking_address_by_user_id(user_id, network, address):
     :param str network: The network of the address.
     :param str address: The address to remove.
     """
-    data = json.load(open('user_tracking_list.json', 'r', encoding="utf8"))
+    data = json.load(open('user_tracking_list.json', encoding="utf8"))
     if len(data[network][user_id]) == 1:
         data[network].pop(user_id)
     else:
