@@ -148,7 +148,7 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \
                   f"{txn['txn_url']}"
-    elif txn_type == 'erc_20_721':
+    elif txn_type == 'erc20_721':
         message = f"New NFT Transaction Found!\n" \
                   f"------------------------------------\n" \
                   f"From: {txn['from']}\n" \
