@@ -280,7 +280,6 @@ def format_txn(txn, txn_type, target_address, goerli=False):
     txn['block_number'] = int(txn['blockNumber'])
     txn['txn_url'] = f'{base_url}/tx/{txn["hash"]}'
     txn['time'] = datetime.fromtimestamp(int(txn['timeStamp'])).strftime('%Y-%m-%d %H:%M:%S')
-    txn['block_hash'] = txn['blockHash']
     txn['contract_address'] = txn['contractAddress']
     if txn_type == 'normal':
         txn['eth_value'] = utils.wei_to_eth(int(txn['value']))
