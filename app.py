@@ -377,6 +377,9 @@ async def alchemy(request: Request):
                 {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc721',
                  'target': target, 'block_num': block_num,
                  'line_notify_tokens': line_notify_tokens})
+        elif 'erc1155Metadata' in json_received['event']['activity'][0]:  # erc1155 txn
+            logging.debug('adding erc1155 txn')
+            # TODO(LD): Add support to erc1155 txn
         elif json_received['event']['activity'][0]['category'] == 'token':  # erc20 txn
             logging.debug('adding erc20 txn')
             merging_txns.append(
