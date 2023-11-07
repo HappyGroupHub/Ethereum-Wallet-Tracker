@@ -3,7 +3,6 @@ import asyncio
 import logging
 import os
 import time
-from threading import Thread
 
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
@@ -42,11 +41,11 @@ config = utils.read_config()
 configuration = Configuration(access_token=config['line_channel_access_token'])
 handler = WebhookHandler(config['line_channel_secret'])
 
-operation_type = {}
-merging_txns = []
-
 eth_mainnet = 'ETH_MAINNET'
 eth_goerli = 'ETH_GOERLI'
+unfiltered_txns = []
+filtering_txns = set()
+operation_type = {}
 
 
 @app.post("/callback")
@@ -78,8 +77,7 @@ async def notify(request: Request):
     utils.add_notify_token_by_user_id(user_id, notify_token)
     push_message = f"Successfully connected to Line Notify! \n" \
                    f"You may now press Wallet Management on the menu below\n" \
-                   f"Start tracking your Ethereum Wallet.\n" \
-
+                   f"Start tracking your Ethereum Wallet.\n"
     line_notify.send_message(push_message, notify_token)
     show_message = f"Successfully connected to LINE Notify! " \
                    f"You may now close this page."
@@ -351,29 +349,29 @@ async def alchemy(request: Request):
             line_notify_tokens.extend(tracking_wallets[target])
         line_notify_tokens = list(set(line_notify_tokens))
 
-        # Determine the transaction type and add to merging_txns list
+        # Determine the transaction type and add to unfiltered_txns list
         if 'asset' in json_received['event']['activity'][0]:
             if json_received['event']['activity'][0]['category'] == 'internal':  # internal txn
                 logging.debug('adding internal txn')
-                merging_txns.append(
+                unfiltered_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'internal',
                      'target': target, 'block_num': block_num,
                      'line_notify_tokens': line_notify_tokens})
             elif json_received['event']['activity'][0]['asset'] == 'ETH':  # normal txn
                 logging.debug('adding normal txn')
-                merging_txns.append(
+                unfiltered_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'normal',
                      'target': target, 'block_num': block_num,
                      'line_notify_tokens': line_notify_tokens})
             else:  # erc20 txn
                 logging.debug('adding erc20 txn')
-                merging_txns.append(
+                unfiltered_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc20',
                      'target': target, 'block_num': block_num,
                      'line_notify_tokens': line_notify_tokens})
         elif 'erc721TokenId' in json_received['event']['activity'][0]:  # erc721 txn
             logging.debug('adding erc721 txn')
-            merging_txns.append(
+            unfiltered_txns.append(
                 {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc721',
                  'target': target, 'block_num': block_num,
                  'line_notify_tokens': line_notify_tokens})
@@ -382,16 +380,21 @@ async def alchemy(request: Request):
             # TODO(LD): Add support to erc1155 txn
         elif json_received['event']['activity'][0]['category'] == 'token':  # erc20 txn
             logging.debug('adding erc20 txn')
-            merging_txns.append(
+            unfiltered_txns.append(
                 {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc20',
                  'target': target, 'block_num': block_num,
                  'line_notify_tokens': line_notify_tokens})
             if len(json_received['event']['activity']) >= 2:  # erc20 + erc721 txn
                 logging.debug('adding erc721 txn')
-                merging_txns.append(
+                unfiltered_txns.append(
                     {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc721',
                      'target': target, 'block_num': block_num,
                      'line_notify_tokens': line_notify_tokens})
+
+        # Call filter_txns function to start filtering same hash transactions
+        if txn_hash not in filtering_txns:
+            filtering_txns.add(txn_hash)
+            asyncio.create_task(filter_txns(txn_hash))
 
 
 async def verify_merge_then_send_notify(txn: dict):
@@ -411,7 +414,6 @@ async def verify_merge_then_send_notify(txn: dict):
     :param dict txn: The filtered transaction.
     """
     while True:
-        await asyncio.sleep(5)
         try:
             normal_txn = {}
             internal_txn = {}
@@ -536,73 +538,58 @@ async def verify_merge_then_send_notify(txn: dict):
 
             break
         except TypeError:
+            # Transaction not found in etherscan, wait 5 seconds and try again
+            await asyncio.sleep(5)
             continue
         except Exception as e:
             logging.error(f'Error occurred while merging txn: {e}')
             break
 
 
-def filter_txns():
+async def filter_txns(txn_hash: str):
     """Filter transactions' types then send them to verify_merge_then_send_notify function.
 
-    This function will be run in every 5 seconds.
-    By continuously checking the merging_txns list, it combines same hash different types
-    transactions into one.
+    This function will be called only one time per transaction hash.
+    By waiting 2 seconds, the function will be expected to receive are all types of transactions from
+    Alchemy Webhook, then it will filter the transactions' types and send them to
+    verify_merge_then_send_notify function.
 
-    The merging_txns should be updated while receiving new transactions from Alchemy Webhook.
-    And the merging_txns should be a list of dictionary with keys:
+    The unfiltered_txns should be updated while receiving new transactions from Alchemy Webhook.
+    And the unfiltered_txns should be a list of dictionary with keys:
     - network: The network of the transaction.
     - block_num: The block number of the transaction.
     - target: The target wallet address of the transaction.
     - txn_hash: The hash of the transaction.
     - txn_type: The type of the transaction.
     - line_notify_tokens(list): The line notify tokens to send.
+
+    :param str txn_hash: The hash of the transaction.
     """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    # Waiting Alchemy Webhook to send all types of transactions
+    await asyncio.sleep(2)
 
-    async def _filter_txns():
-        while True:
-            if merging_txns:
-                filtered_txns = []
-                data_dict = {}
-                for txn in merging_txns:
-                    network = txn['network']
-                    block_num = txn['block_num']
-                    target = txn['target']
-                    txn_hash = txn['txn_hash']
-                    txn_type = txn['txn_type']
-                    txn_line_notify_tokens = txn['line_notify_tokens']
-                    if network in data_dict:
-                        if txn_hash in data_dict[network]:
-                            data_dict[network][txn_hash]['txn_type'].append(txn_type)
-                        else:
-                            data_dict[network][txn_hash] = {'network': network,
-                                                            'block_num': block_num,
-                                                            'target': target,
-                                                            'txn_type': [txn_type],
-                                                            'txn_hash': txn_hash,
-                                                            'line_notify_tokens': txn_line_notify_tokens}
-                    else:
-                        data_dict[network] = {
-                            txn_hash: {'network': network, 'block_num': block_num, 'target': target,
-                                       'txn_type': [txn_type], 'txn_hash': txn_hash,
-                                       'line_notify_tokens': txn_line_notify_tokens}}
-                for network, addresses in data_dict.items():
-                    for txn_hash, txn_data in addresses.items():
-                        filtered_txns.append(txn_data)
+    # Filter the transactions' types, combine them into one
+    global unfiltered_txns
+    filtered_txn = {}
+    for txn in unfiltered_txns:
+        if txn['txn_hash'] == txn_hash:
+            if not filtered_txn:
+                filtered_txn = {
+                    'txn_hash': txn['txn_hash'],
+                    'network': txn['network'],
+                    'block_num': txn['block_num'],
+                    'target': txn['target'],
+                    'txn_type': [txn['txn_type']],
+                    'line_notify_tokens': txn['line_notify_tokens']
+                }
+            else:
+                filtered_txn['txn_type'].append(txn['txn_type'])
 
-                logging.debug(f'Filtered - {filtered_txns}')
-                for filtered_txn in filtered_txns:
-                    asyncio.create_task(verify_merge_then_send_notify(filtered_txn))
-                merging_txns.clear()
-                filtered_txns.clear()
-            await asyncio.sleep(5)
-
-    try:
-        asyncio.run(_filter_txns())
-    except KeyboardInterrupt:
-        logging.error('KeyboardInterrupt received, exiting.')
+    # Finish filtering, call verify_merge_then_send_notify function
+    logging.debug(f'Filtered - {filtered_txn}')
+    asyncio.create_task(verify_merge_then_send_notify(filtered_txn))
+    unfiltered_txns = [d for d in unfiltered_txns if d.get('txn_hash') != txn_hash]
+    filtering_txns.remove(txn_hash)
 
 
 def open_rich_menu():
@@ -644,7 +631,5 @@ def open_rich_menu():
 
 if __name__ == '__main__':
     utils.initial_checks()
-    thread = Thread(target=filter_txns)
-    thread.start()
     open_rich_menu()
     uvicorn.run(app, port=config['webhook_port'])
