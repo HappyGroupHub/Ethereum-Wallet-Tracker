@@ -2,6 +2,7 @@
 This file is used to manually send Alchemy Webhook data to the webhook URL.
 
 Before running this file, please MAKE SURE you are running test_app.py in TESTS directory.
+Also, make sure you've added the target address in tracking_wallets.json.
 """
 import requests
 
