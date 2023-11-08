@@ -170,8 +170,8 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"ETH Spend: {txn['spend_value']}\n" \
                   f"Action: {txn['action']}\n" \
                   f"------------------------------------\n" \
-                  f"Token Value: {txn['value']} {txn['token_symbol']}\n" \
-                  f"{txn['token_name']} #{txn['token_id']}\n" \
+                  f"Token Value: {txn['erc20_value']} {txn['token_symbol']}\n" \
+                  f"NFT: {txn['token_name']} #{txn['token_id']}\n" \
                   f"------------------------------------\n" \
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \

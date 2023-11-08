@@ -292,7 +292,7 @@ def format_txn(txn, txn_type, target_address, goerli=False):
     if txn_type == 'erc20':
         txn['token_symbol'] = txn['tokenSymbol']
         txn['token_decimal'] = int(txn['tokenDecimal'])
-        txn['value'] = int(txn['value']) / 10 ** txn['token_decimal']
+        txn['value'] = round(int(txn['value']) / 10 ** txn['token_decimal'], 4)
         if not goerli:
             txn['token_balance'] = get_erc20_token_balance(target_address, txn['contract_address'],
                                                            txn['token_decimal'])
