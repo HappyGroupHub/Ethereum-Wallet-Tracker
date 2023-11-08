@@ -118,7 +118,7 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"To: {txn['to']}\n" \
                   f"Time: {txn['time']}\n" \
                   f"Sell price: {txn['receive_value']}\n" \
-                  f"Sold NFT: {txn['token_name']} #{txn['token_id']}" \
+                  f"Sold NFT: {txn['token_name']} #{txn['token_id']}\n" \
                   f"------------------------------------\n" \
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"{txn['txn_url']}"
