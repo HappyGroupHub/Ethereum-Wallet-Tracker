@@ -83,7 +83,6 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"To: {txn['to']}\n" \
                   f"Time: {txn['time']}\n" \
                   f"Value: {txn['eth_value']} ETH\n" \
-                  f"Action: {txn['action']}\n" \
                   f"------------------------------------\n" \
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"{txn['txn_url']}"
