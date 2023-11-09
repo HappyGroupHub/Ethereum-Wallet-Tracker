@@ -37,7 +37,7 @@ logging.basicConfig(filename=f'{log_filename}', encoding='utf-8', filemode='w',
                     level=logging.DEBUG, force=True)
 
 config = utils.read_config()
-test_notify_token = ['YOUR_TEST_LINE_NOTIFY_TOKEN']
+test_notify_token = ['LSYifU87wZzbcbEX6bSfsEYfNaiaJz99jhNgcJK035H']
 
 eth_mainnet = 'ETH_MAINNET'
 eth_goerli = 'ETH_GOERLI'
@@ -249,7 +249,7 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn = erc721_txn
                 new_txn['spend_value'] = f"{normal_txn['value']} ETH"
                 new_txn['action'] = normal_txn['action']
-                new_txn['value'] = erc20_txn['value']
+                new_txn['erc20_value'] = erc20_txn['value']
                 new_txn['token_symbol'] = erc20_txn['token_symbol']
                 new_txn['token_balance'] = erc20_txn['token_balance']
                 line_notify.send_notify(new_txn, 'normal_20_721', txn['line_notify_tokens'])
