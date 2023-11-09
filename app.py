@@ -525,7 +525,7 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn = erc721_txn
                 new_txn['spend_value'] = f"{normal_txn['value']} ETH"
                 new_txn['action'] = normal_txn['action']
-                new_txn['value'] = erc20_txn['value']
+                new_txn['erc20_value'] = erc20_txn['value']
                 new_txn['token_symbol'] = erc20_txn['token_symbol']
                 new_txn['token_balance'] = erc20_txn['token_balance']
                 line_notify.send_notify(new_txn, 'normal_20_721', txn['line_notify_tokens'])
