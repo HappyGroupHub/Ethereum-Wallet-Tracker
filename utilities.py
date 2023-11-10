@@ -1,8 +1,10 @@
 """This python will handle some extra functions."""
 import json
+import os
 import sys
 from os.path import exists
 
+import requests
 import yaml
 from yaml import SafeLoader
 
@@ -56,10 +58,12 @@ webhook_url: ''
 # If you change this, make sure to change the port in your reverse proxy as well.
 webhook_port: 5000
 
-# Paste your Etherscan api key and Alchemy Webhook Auth Token here.
+# Paste your Etherscan api key and Alchemy api key / webhook auth token here.
 # Etherscan: https://etherscan.io/myapikey
-# Alchemy: https://dashboard.alchemyapi.io/webhooks
+# Alchemy api key: https://dashboard.alchemy.com/apps
+# Alchemy webhook: https://dashboard.alchemyapi.io/webhooks
 etherscan_api_key: ''
+alchemy_api_key: ''
 alchemy_webhook_auth_token: ''
 
 # Paste yor Line Bot and Line Notify tokens and secrets here.
@@ -95,6 +99,7 @@ def read_config():
                 'webhook_url': data['webhook_url'],
                 'webhook_port': data['webhook_port'],
                 'etherscan_api_key': data['etherscan_api_key'],
+                'alchemy_api_key': data['alchemy_api_key'],
                 'alchemy_webhook_auth_token': data['alchemy_webhook_auth_token'],
                 'line_channel_access_token': data['line_channel_access_token'],
                 'line_channel_secret': data['line_channel_secret'],
@@ -270,3 +275,23 @@ def wei_to_gwei(wei):
     :rtype: int
     """
     return int(round(wei / 10 ** 9, 0))
+
+
+def download_png_from_url(folder_name, url, filename):
+    """Download png from given url.
+
+    Use to download NFT's image.
+
+    :param str folder_name: Folder name of downloaded files.
+    :param url: url of file
+    :param filename: filename of file
+    :return str: file path
+    """
+    r = requests.get(url, allow_redirects=True, timeout=5)
+    path = f'./images/nft_images/{folder_name}'
+    if not os.path.exists(path):
+        os.makedirs(path)
+    file_path = f'{path}/{filename}.png'
+    with open(file_path, 'wb') as fd:
+        fd.write(r.content)
+    return file_path

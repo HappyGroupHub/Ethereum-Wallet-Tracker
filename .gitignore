@@ -4,6 +4,9 @@ tracking_wallets.json
 notify_token_pairs.json
 user_tracking_list.json
 
+#Downloaded Files
+images/nft_images
+
 # Logs
 *.log
 logs
@@ -18,3 +21,9 @@ venv
 *.spec
 build
 dist
+
+# Testing Files
+tests/manual_alchemy.py
+tests/images
+test.py
+test.json

@@ -5,6 +5,7 @@ from datetime import datetime
 import requests
 from requests import JSONDecodeError
 
+import alchemy
 import utilities as utils
 
 config = utils.read_config()
@@ -302,5 +303,15 @@ def format_txn(txn, txn_type, target_address, goerli=False):
     if txn_type == 'erc721':
         txn['token_name'] = txn['tokenName']
         txn['token_id'] = txn['tokenID']
+        if not goerli:
+            txn['nft_image_url'] = \
+                alchemy.get_nft_metadata(txn['contract_address'], txn['token_id'])['nft_image_url']
+        else:
+            txn['nft_image_url'] = \
+                alchemy.get_nft_metadata(txn['contract_address'], txn['token_id'],
+                                         goerli=True)['nft_image_url']
+        txn['nft_image_path'] = utils.download_png_from_url(
+            f"{txn['token_name']}_{txn['contract_address']}",
+            txn['nft_image_url'], txn['token_id'])
 
     return txn

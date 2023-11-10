@@ -1,3 +1,4 @@
+import logging
 import urllib
 
 import requests
@@ -20,6 +21,22 @@ def send_message(message, token):
     data = {'message': '\n' + message}
     requests.post("https://notify-api.line.me/api/notify",
                   headers=headers, data=data, timeout=5)
+
+
+def send_image_message(message, image_path, token):
+    """Send media message to LINE Notify.
+
+    :param str message: Message to send.
+    :param str image_path: Path to media.
+    :param str token: LINE Notify token.
+    """
+    headers = {"Authorization": "Bearer " + token}
+    data = {'message': message}
+    with open(image_path, 'rb') as f:
+        image = f.read()
+    files = {'imageFile': image}
+    requests.post("https://notify-api.line.me/api/notify",
+                  headers=headers, data=data, files=files, timeout=5)
 
 
 def create_auth_link(user_id):
@@ -177,4 +194,7 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \
                   f"{txn['txn_url']}"
     for token in line_notify_tokens:
-        send_message(message, token)
+        if '721' in txn_type:
+            send_image_message(message, txn['nft_image_path'], token)
+        else:
+            send_message(message, token)
