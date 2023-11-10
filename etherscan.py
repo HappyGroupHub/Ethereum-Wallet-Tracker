@@ -302,5 +302,10 @@ def format_txn(txn, txn_type, target_address, goerli=False):
     if txn_type == 'erc721':
         txn['token_name'] = txn['tokenName']
         txn['token_id'] = txn['tokenID']
+        if not goerli:
+            txn['token_balance'] = get_erc721_token_balance(target_address, txn['contract_address'])
+        else:
+            txn['token_balance'] = get_erc721_token_balance(target_address, txn['contract_address'],
+                                                            goerli=True)
 
     return txn

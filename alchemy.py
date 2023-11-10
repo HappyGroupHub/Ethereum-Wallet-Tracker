@@ -8,6 +8,7 @@ import utilities as utils
 config = utils.read_config()
 webhook_url = config.get('webhook_url')
 
+alchemy_api_key = config.get('alchemy_api_key')
 alchemy_webhook_auth_token = config.get('alchemy_webhook_auth_token')
 
 # Uncomment these lines to see the http request and response headers and body.
@@ -102,3 +103,26 @@ def remove_tracking_address(webhook_id, address):
     }
     response = requests.patch(url, json=payload, headers=headers)
     return response.json()
+
+
+def get_nft_metadata(contract_address, token_id, token_type='ERC721', goerli=False):
+    """Get NFT metadata from alchemy.
+
+    :param str contract_address: The address of the NFT contract.
+    :param str token_id: The id of the NFT.
+    :param str token_type: The type of the NFT. ERC721 or ERC1155. Default is ERC721.
+    :param bool goerli: Whether to use goerli test network.
+    :return:
+    """
+    if not goerli:
+        url = "https://eth-mainnet.g.alchemy.com/nft/v2/"
+    else:
+        url = "https://eth-goerli.g.alchemy.com/nft/v2/"
+    url += (f"{alchemy_api_key}/getNFTMetadata?contractAddress={contract_address}&tokenId={token_id}"
+            f"&tokenType={token_type}&refreshCache=false")
+    headers = {
+        "accept": "application/json"
+    }
+    response = requests.get(url, headers=headers).json()
+    response['nft_image_url'] = response['media'][0]['thumbnail']
+    return response

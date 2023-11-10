@@ -56,10 +56,12 @@ webhook_url: ''
 # If you change this, make sure to change the port in your reverse proxy as well.
 webhook_port: 5000
 
-# Paste your Etherscan api key and Alchemy Webhook Auth Token here.
+# Paste your Etherscan api key and Alchemy api key / webhook auth token here.
 # Etherscan: https://etherscan.io/myapikey
-# Alchemy: https://dashboard.alchemyapi.io/webhooks
+# Alchemy api key: https://dashboard.alchemy.com/apps
+# Alchemy webhook: https://dashboard.alchemyapi.io/webhooks
 etherscan_api_key: ''
+alchemy_api_key: ''
 alchemy_webhook_auth_token: ''
 
 # Paste yor Line Bot and Line Notify tokens and secrets here.
@@ -95,6 +97,7 @@ def read_config():
                 'webhook_url': data['webhook_url'],
                 'webhook_port': data['webhook_port'],
                 'etherscan_api_key': data['etherscan_api_key'],
+                'alchemy_api_key': data['alchemy_api_key'],
                 'alchemy_webhook_auth_token': data['alchemy_webhook_auth_token'],
                 'line_channel_access_token': data['line_channel_access_token'],
                 'line_channel_secret': data['line_channel_secret'],
