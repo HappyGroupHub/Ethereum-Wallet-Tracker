@@ -22,6 +22,22 @@ def send_message(message, token):
                   headers=headers, data=data, timeout=5)
 
 
+def send_image_message(message, image_path, token):
+    """Send media message to LINE Notify.
+
+    :param str message: Message to send.
+    :param str image_path: Path to media.
+    :param str token: LINE Notify token.
+    """
+    headers = {"Authorization": "Bearer " + token}
+    data = {'message': message}
+    with open(image_path, 'rb') as f:
+        image = f.read()
+    files = {'imageFile': image}
+    requests.post("https://notify-api.line.me/api/notify",
+                  headers=headers, data=data, files=files, timeout=5)
+
+
 def create_auth_link(user_id):
     """Create LINE Notify auth link for user to connect.
 
