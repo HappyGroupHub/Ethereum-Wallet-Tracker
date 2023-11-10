@@ -526,7 +526,7 @@ async def verify_merge_then_send_notify(txn: dict):
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type'] and 'erc721' in txn['txn_type']:
                 new_txn = erc721_txn
-                new_txn['spend_value'] = f"{normal_txn['value']} ETH"
+                new_txn['spend_value'] = f"{normal_txn['eth_value']} ETH"
                 new_txn['action'] = normal_txn['action']
                 new_txn['erc20_value'] = erc20_txn['value']
                 new_txn['token_symbol'] = erc20_txn['token_symbol']
