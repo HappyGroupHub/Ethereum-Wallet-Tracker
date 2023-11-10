@@ -1,3 +1,4 @@
+import logging
 import urllib
 
 import requests
@@ -193,4 +194,7 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \
                   f"{txn['txn_url']}"
     for token in line_notify_tokens:
-        send_message(message, token)
+        if '721' in txn_type:
+            send_image_message(message, txn['nft_image_path'], token)
+        else:
+            send_message(message, token)

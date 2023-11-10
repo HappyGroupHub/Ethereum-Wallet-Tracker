@@ -23,6 +23,7 @@ build
 dist
 
 # Testing Files
-tests/test_app.py
+tests/manual_alchemy.py
+tests/images
 test.py
 test.json

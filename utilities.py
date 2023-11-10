@@ -291,7 +291,7 @@ def download_png_from_url(folder_name, url, filename):
     path = f'./images/nft_images/{folder_name}'
     if not os.path.exists(path):
         os.makedirs(path)
-    file_path = f'{path}/{filename}'
+    file_path = f'{path}/{filename}.png'
     with open(file_path, 'wb') as fd:
         fd.write(r.content)
     return file_path
