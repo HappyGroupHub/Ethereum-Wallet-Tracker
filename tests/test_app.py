@@ -225,6 +225,7 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['to'] = erc721_txn['to']
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
+                new_txn['nft_image_path'] = erc721_txn['nft_image_path']
                 line_notify.send_notify(new_txn, 'erc721', txn['line_notify_tokens'])
                 logging.info(f'Sent normal/erc721 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 2 and 'erc20' in txn['txn_type'] and 'erc721' in txn[
@@ -232,6 +233,7 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn = erc20_txn
                 new_txn['token_name'] = erc721_txn['token_name']
                 new_txn['token_id'] = erc721_txn['token_id']
+                new_txn['nft_image_path'] = erc721_txn['nft_image_path']
                 line_notify.send_notify(new_txn, 'erc20_721', txn['line_notify_tokens'])
                 logging.info(f'Sent erc20/erc721 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 2 and 'internal' in txn['txn_type'] and 'erc721' in txn[
