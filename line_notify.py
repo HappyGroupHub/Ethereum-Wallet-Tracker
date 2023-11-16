@@ -128,17 +128,19 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"NFT: {txn['token_name']} #{txn['token_id']}\n" \
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"{txn['txn_url']}"
-    elif txn_type == 'internal_721':
-        message = f"New NFT SOLD Transaction Found!\n" \
+    elif txn_type == 'erc1155':
+        message = f"New NFT Transaction Found!\n" \
                   f"------------------------------------\n" \
                   f"From: {txn['from']}\n" \
                   f"To: {txn['to']}\n" \
                   f"Time: {txn['time']}\n" \
-                  f"Sell price: {txn['receive_value']}\n" \
-                  f"Sold NFT: {txn['token_name']} #{txn['token_id']}\n" \
+                  f"Gas Price: {txn['gas_price']} Gwei\n" \
+                  f"ETH Spend: {txn['spend_value']}\n" \
                   f"------------------------------------\n" \
+                  f"NFT: {txn['token_name']} #{txn['token_id']} x{txn['token_value']}\n" \
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"{txn['txn_url']}"
+
     elif txn_type == 'normal_internal':
         message = f"New Swap Transaction Found!\n" \
                   f"------------------------------------\n" \
@@ -151,18 +153,27 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"------------------------------------\n" \
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"{txn['txn_url']}"
-    elif txn_type == 'normal_internal_20':
-        message = f"New Swap Transaction Found!\n" \
+    elif txn_type == 'internal_721':
+        message = f"New NFT SOLD Transaction Found!\n" \
                   f"------------------------------------\n" \
                   f"From: {txn['from']}\n" \
                   f"To: {txn['to']}\n" \
                   f"Time: {txn['time']}\n" \
-                  f"Gas Price: {txn['gas_price']} Gwei\n" \
-                  f"Token Spend: {txn['value']} {txn['token_symbol']}\n" \
-                  f"ETH Receive: {txn['receive_value']}\n" \
+                  f"Sell price: {txn['receive_value']}\n" \
+                  f"Sold NFT: {txn['token_name']} #{txn['token_id']}\n" \
                   f"------------------------------------\n" \
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
-                  f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \
+                  f"{txn['txn_url']}"
+    elif txn_type == 'internal_1155':
+        message = f"New NFT SOLD Transaction Found!\n" \
+                  f"------------------------------------\n" \
+                  f"From: {txn['from']}\n" \
+                  f"To: {txn['to']}\n" \
+                  f"Time: {txn['time']}\n" \
+                  f"Sell price: {txn['receive_value']}\n" \
+                  f"Sold NFT: {txn['token_name']} #{txn['token_id']} x{txn['token_value']}\n" \
+                  f"------------------------------------\n" \
+                  f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"{txn['txn_url']}"
     elif txn_type == 'erc20_721':
         message = f"New NFT Transaction Found!\n" \
@@ -177,6 +188,34 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \
                   f"{txn['txn_url']}"
+    elif txn_type == 'erc20_1155':
+        message = f"New NFT Transaction Found!\n" \
+                  f"------------------------------------\n" \
+                  f"From: {txn['from']}\n" \
+                  f"To: {txn['to']}\n" \
+                  f"Time: {txn['time']}\n" \
+                  f"Gas Price: {txn['gas_price']} Gwei\n" \
+                  f"Token Value: {txn['value']} {txn['token_symbol']}\n" \
+                  f"NFT: {txn['token_name']} #{txn['token_id']} x{txn['token_value']}\n" \
+                  f"------------------------------------\n" \
+                  f"Current Balance: {txn['wallet_balance']} ETH\n" \
+                  f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \
+                  f"{txn['txn_url']}"
+
+    elif txn_type == 'normal_internal_20':
+        message = f"New Swap Transaction Found!\n" \
+                  f"------------------------------------\n" \
+                  f"From: {txn['from']}\n" \
+                  f"To: {txn['to']}\n" \
+                  f"Time: {txn['time']}\n" \
+                  f"Gas Price: {txn['gas_price']} Gwei\n" \
+                  f"Token Spend: {txn['value']} {txn['token_symbol']}\n" \
+                  f"ETH Receive: {txn['receive_value']}\n" \
+                  f"------------------------------------\n" \
+                  f"Current Balance: {txn['wallet_balance']} ETH\n" \
+                  f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \
+                  f"{txn['txn_url']}"
+
     elif txn_type == 'normal_20_721':
         message = f"New NFT Transaction Found!\n" \
                   f"------------------------------------\n" \
@@ -193,8 +232,24 @@ def send_notify(txn, txn_type, line_notify_tokens):
                   f"Current Balance: {txn['wallet_balance']} ETH\n" \
                   f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \
                   f"{txn['txn_url']}"
+    elif txn_type == 'normal_20_1155':
+        message = f"New NFT Transaction Found!\n" \
+                  f"------------------------------------\n" \
+                  f"From: {txn['from']}\n" \
+                  f"To: {txn['to']}\n" \
+                  f"Time: {txn['time']}\n" \
+                  f"Gas Price: {txn['gas_price']} Gwei\n" \
+                  f"ETH Spend: {txn['spend_value']}\n" \
+                  f"Action: {txn['action']}\n" \
+                  f"------------------------------------\n" \
+                  f"Token Value: {txn['erc20_value']} {txn['token_symbol']}\n" \
+                  f"NFT: {txn['token_name']} #{txn['token_id']} x{txn['token_value']}\n" \
+                  f"------------------------------------\n" \
+                  f"Current Balance: {txn['wallet_balance']} ETH\n" \
+                  f"Token Balance: {txn['token_balance']['balance']} {txn['token_symbol']}\n" \
+                  f"{txn['txn_url']}"
     for token in line_notify_tokens:
-        if '721' in txn_type:
+        if '721' or '1155' in txn_type:
             send_image_message(message, txn['nft_image_path'], token)
         else:
             send_message(message, token)

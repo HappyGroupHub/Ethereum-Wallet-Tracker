@@ -211,13 +211,12 @@ def get_erc721_token_transfers(wallet_address, goerli=False, contract_address=No
             f"An error occurred while getting erc721 token transfers: {response}")
 
 
-def get_erc1155_token_transfers(wallet_address, contract_address=None, start_block=0,
+def get_erc1155_token_transfers(wallet_address, goerli=False, contract_address=None, start_block=0,
                                 end_block=99999999, page=1, offset=10, sort='desc'):
     """Get erc1155 token transfers.
 
-    Does NOT support Goerli testnet.
-
     :param str wallet_address: Wallet address
+    :param bool goerli: If True, use goerli testnet, default is False
     :param str contract_address: Specify token contract address, default is all erc1155 tokens
     :param int start_block: Start block, default is 0
     :param int end_block: End block, default is 99999999
@@ -226,20 +225,17 @@ def get_erc1155_token_transfers(wallet_address, contract_address=None, start_blo
     :param str sort: Sorting preference, asc or desc, default is desc
     :rtype: list
     """
-    if not config.get('use_goerli_testnet'):
-        url = get_api_url('account', 'token1155tx', address=wallet_address,
-                          contract_address=contract_address, start_block=start_block,
-                          end_block=end_block, page=page, offset=offset, sort=sort)
-        response = get_json_response(url)
-        if response['status'] == '1' and response['message'] == 'OK':
-            return response['result']
-        elif response['message'] == 'No transactions found':
-            return None
-        else:
-            raise Exception(
-                f"An error occurred while getting erc1155 token transfers: {response}")
-    else:
+    url = get_api_url('account', 'token1155tx', goerli=goerli, address=wallet_address,
+                      contract_address=contract_address, start_block=start_block,
+                      end_block=end_block, page=page, offset=offset, sort=sort)
+    response = get_json_response(url)
+    if response['status'] == '1' and response['message'] == 'OK':
+        return response['result']
+    elif response['message'] == 'No transactions found':
         return None
+    else:
+        raise Exception(
+            f"An error occurred while getting erc1155 token transfers: {response}")
 
 
 def get_json_response(url):
@@ -300,7 +296,7 @@ def format_txn(txn, txn_type, target_address, goerli=False):
         else:
             txn['token_balance'] = get_erc20_token_balance(target_address, txn['contract_address'],
                                                            txn['token_decimal'], goerli=True)
-    if txn_type == 'erc721':
+    if txn_type == 'erc721' or txn_type == 'erc1155':
         txn['token_name'] = txn['tokenName']
         txn['token_id'] = txn['tokenID']
         if not goerli:
@@ -313,5 +309,7 @@ def format_txn(txn, txn_type, target_address, goerli=False):
         txn['nft_image_path'] = utils.download_png_from_url(
             f"{txn['token_name']}_{txn['contract_address']}",
             txn['nft_image_url'], txn['token_id'])
+    if txn_type == 'erc1155':
+        txn['token_value'] = txn['tokenValue']
 
     return txn

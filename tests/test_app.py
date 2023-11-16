@@ -101,7 +101,10 @@ async def alchemy(request: Request):
                  'line_notify_tokens': test_notify_token})
         elif 'erc1155Metadata' in json_received['event']['activity'][0]:  # erc1155 txn
             logging.debug('adding erc1155 txn')
-            # TODO(LD): Add support to erc1155 txn
+            unfiltered_txns.append(
+                {'network': txn_network, 'txn_hash': txn_hash, 'txn_type': 'erc1155',
+                 'target': target, 'block_num': block_num,
+                 'line_notify_tokens': test_notify_token})
         elif json_received['event']['activity'][0]['category'] == 'token':  # erc20 txn
             logging.debug('adding erc20 txn')
             unfiltered_txns.append(
@@ -141,8 +144,9 @@ async def verify_merge_then_send_notify(txn: dict):
         try:
             normal_txn = {}
             internal_txn = {}
-            erc721_txn = {}
             erc20_txn = {}
+            erc721_txn = {}
+            erc1155_txn = {}
             use_goerli = False
             if txn['network'] == eth_goerli:
                 use_goerli = True
@@ -155,6 +159,7 @@ async def verify_merge_then_send_notify(txn: dict):
                                                               goerli=use_goerli)
                     for normal_txn in normal_txns:
                         if normal_txn['hash'] == txn['txn_hash']:
+                            logging.warning('found normal txn')
                             normal_txn = eth.format_txn(normal_txn, txn_type, txn['target'],
                                                         goerli=use_goerli)
                             logging.debug(f'Formatted normal txn - {normal_txn}')
@@ -189,6 +194,17 @@ async def verify_merge_then_send_notify(txn: dict):
                                                         goerli=use_goerli)
                             logging.debug(f'Formatted erc721 txn - {erc721_txn}')
                             break
+                if txn_type == 'erc1155':
+                    erc1155_txns = eth.get_erc1155_token_transfers(txn['target'],
+                                                                   start_block=txn['block_num'],
+                                                                   goerli=use_goerli)
+                    for erc1155_txn in erc1155_txns:
+                        logging.warning(erc1155_txn)
+                        if erc1155_txn['hash'] == txn['txn_hash']:
+                            erc1155_txn = eth.format_txn(erc1155_txn, txn_type, txn['target'],
+                                                         goerli=use_goerli)
+                            logging.debug(f'Formatted erc1155 txn - {erc1155_txn}')
+                            break
 
             # Merge the transactions and send notify
             if len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'normal':
@@ -205,11 +221,15 @@ async def verify_merge_then_send_notify(txn: dict):
                 erc721_txn['spend_value'] = 'Transfer'
                 line_notify.send_notify(erc721_txn, 'erc721', txn['line_notify_tokens'])
                 logging.info(f'Sent erc721 txn notify - {txn["txn_hash"]}')
+            elif len(txn['txn_type']) == 1 and txn['txn_type'][0] == 'erc1155':
+                erc1155_txn['spend_value'] = 'Transfer'
+                line_notify.send_notify(erc1155_txn, 'erc1155', txn['line_notify_tokens'])
+                logging.info(f'Sent erc1155 txn notify - {txn["txn_hash"]}')
 
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type']:
                 new_txn = erc20_txn
-                if normal_txn['value'] == '0':
+                if normal_txn['eth_value'] == '0':
                     new_txn['spend_value'] = 'Transfer'
                 else:
                     new_txn['spend_value'] = f"{normal_txn['eth_value']} ETH"
@@ -218,7 +238,7 @@ async def verify_merge_then_send_notify(txn: dict):
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 new_txn = normal_txn
-                if normal_txn['value'] == '0':
+                if normal_txn['eth_value'] == '0':
                     new_txn['spend_value'] = 'Transfer'
                 else:
                     new_txn['spend_value'] = f"{normal_txn['eth_value']} ETH"
@@ -228,6 +248,20 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['nft_image_path'] = erc721_txn['nft_image_path']
                 line_notify.send_notify(new_txn, 'erc721', txn['line_notify_tokens'])
                 logging.info(f'Sent normal/erc721 txn notify - {txn["txn_hash"]}')
+            elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'erc1155' in txn[
+                'txn_type']:
+                new_txn = normal_txn
+                if normal_txn['eth_value'] == '0':
+                    new_txn['spend_value'] = 'Transfer'
+                else:
+                    new_txn['spend_value'] = f"{normal_txn['eth_value']} ETH"
+                new_txn['to'] = erc1155_txn['to']
+                new_txn['token_name'] = erc1155_txn['token_name']
+                new_txn['token_id'] = erc1155_txn['token_id']
+                new_txn['token_value'] = erc1155_txn['token_value']
+                new_txn['nft_image_path'] = erc1155_txn['nft_image_path']
+                line_notify.send_notify(new_txn, 'erc1155', txn['line_notify_tokens'])
+                logging.info(f'Sent normal/erc1155 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 2 and 'erc20' in txn['txn_type'] and 'erc721' in txn[
                 'txn_type']:
                 new_txn = erc20_txn
@@ -236,18 +270,33 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['nft_image_path'] = erc721_txn['nft_image_path']
                 line_notify.send_notify(new_txn, 'erc20_721', txn['line_notify_tokens'])
                 logging.info(f'Sent erc20/erc721 txn notify - {txn["txn_hash"]}')
-            elif len(txn['txn_type']) == 2 and 'internal' in txn['txn_type'] and 'erc721' in txn[
+            elif len(txn['txn_type']) == 2 and 'erc20' in txn['txn_type'] and 'erc1155' in txn[
                 'txn_type']:
-                new_txn = erc721_txn
-                new_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
-                line_notify.send_notify(new_txn, 'internal_721', txn['line_notify_tokens'])
-                logging.info(f'Sent internal/erc721 txn notify - {txn["txn_hash"]}')
+                new_txn = erc20_txn
+                new_txn['token_name'] = erc1155_txn['token_name']
+                new_txn['token_id'] = erc1155_txn['token_id']
+                new_txn['token_value'] = erc1155_txn['token_value']
+                new_txn['nft_image_path'] = erc1155_txn['nft_image_path']
+                line_notify.send_notify(new_txn, 'erc20_1155', txn['line_notify_tokens'])
+                logging.info(f'Sent erc20/erc1155 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 2 and 'normal' in txn['txn_type'] and 'internal' in txn[
                 'txn_type']:
                 new_txn = normal_txn
                 new_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
                 line_notify.send_notify(new_txn, 'normal_internal', txn['line_notify_tokens'])
                 logging.info(f'Sent normal/internal txn notify - {txn["txn_hash"]}')
+            elif len(txn['txn_type']) == 2 and 'internal' in txn['txn_type'] and 'erc721' in txn[
+                'txn_type']:
+                new_txn = erc721_txn
+                new_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
+                line_notify.send_notify(new_txn, 'internal_721', txn['line_notify_tokens'])
+                logging.info(f'Sent internal/erc721 txn notify - {txn["txn_hash"]}')
+            elif len(txn['txn_type']) == 2 and 'internal' in txn['txn_type'] and 'erc1155' in txn[
+                'txn_type']:
+                new_txn = erc1155_txn
+                new_txn['receive_value'] = f"{internal_txn['eth_value']} ETH"
+                line_notify.send_notify(new_txn, 'internal_1155', txn['line_notify_tokens'])
+                logging.info(f'Sent internal/erc1155 txn notify - {txn["txn_hash"]}')
 
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'erc20' in txn[
                 'txn_type'] and 'erc721' in txn['txn_type']:
@@ -259,6 +308,16 @@ async def verify_merge_then_send_notify(txn: dict):
                 new_txn['token_balance'] = erc20_txn['token_balance']
                 line_notify.send_notify(new_txn, 'normal_20_721', txn['line_notify_tokens'])
                 logging.info(f'Sent normal/erc20/erc721 txn notify - {txn["txn_hash"]}')
+            elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'erc20' in txn[
+                'txn_type'] and 'erc1155' in txn['txn_type']:
+                new_txn = erc1155_txn
+                new_txn['spend_value'] = f"{normal_txn['eth_value']} ETH"
+                new_txn['action'] = normal_txn['action']
+                new_txn['erc20_value'] = erc20_txn['value']
+                new_txn['token_symbol'] = erc20_txn['token_symbol']
+                new_txn['token_balance'] = erc20_txn['token_balance']
+                line_notify.send_notify(new_txn, 'normal_20_1155', txn['line_notify_tokens'])
+                logging.info(f'Sent normal/erc20/erc1155 txn notify - {txn["txn_hash"]}')
             elif len(txn['txn_type']) == 3 and 'normal' in txn['txn_type'] and 'internal' in txn[
                 'txn_type'] and 'erc20' in txn['txn_type']:
                 new_txn = erc20_txn
