@@ -1,3 +1,25 @@
+<div align="center">
+  <h1 id="Ethereum-Wallet-Tracker">
+    <a href="https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/" target="_blank">Ethereum-Wallet-Tracker / LINE Notify, Discord</a>
+  </h1>
+
+[![Total Downloads](https://img.shields.io/github/downloads/HappyGroupHub/Ethereum-Wallet-Tracker/total?style=for-the-badge
+)](https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/releases)
+[![Current Version](https://img.shields.io/github/v/release/HappyGroupHub/Ethereum-Wallet-Tracker?style=for-the-badge
+)](https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/releases)
+[![LICENSE](https://img.shields.io/github/license/HappyGroupHub/Ethereum-Wallet-Tracker?style=for-the-badge
+)](https://github.com/HappyGroupHub/Ethereum-Wallet-Tracker/blob/master/LICENSE)
+
+
+直接邀請機器人開始使用 | Invite Bots below to try it out！
+
+
+[LINE Official Account Invite Link](https://line.me/R/ti/p/@580rwuwu)
+
+Discord Bot Under Developing...
+
+</div>
+
 # Ethereum Wallet Tracker
 
 📖 [繁體中文版README.md](#以太坊錢包交易通知機器人) 📖
